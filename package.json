@@ -1,0 +1,13 @@
+{
+  "name": "ziistec-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Site institucional oficial da ZiisTec",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/check.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
