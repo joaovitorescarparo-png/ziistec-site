@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://ziistec.com/sitemap.xml
