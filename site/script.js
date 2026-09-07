@@ -35,32 +35,28 @@ const year = document.getElementById('year');
 if (year) year.textContent = new Date().getFullYear();
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-const targets = document.querySelectorAll('.reveal');
+const revealTargets = document.querySelectorAll('.reveal');
 
 if ('IntersectionObserver' in window && !reducedMotion.matches) {
-  const observer = new IntersectionObserver((entries) => {
+  const revealObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        observer.unobserve(entry.target);
-      }
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('visible');
+      revealObserver.unobserve(entry.target);
     });
   }, { threshold: 0.12, rootMargin: '0px 0px -30px' });
-  targets.forEach(target => observer.observe(target));
+  revealTargets.forEach(target => revealObserver.observe(target));
 } else {
-  targets.forEach(target => target.classList.add('visible'));
+  revealTargets.forEach(target => target.classList.add('visible'));
 }
 
-const motionTargets = [
+const oneShotMotionTargets = [
   document.querySelector('.product-stage-v3'),
-  document.querySelector('.operation-board'),
-  document.querySelector('.team-stage'),
-  document.querySelector('.day-timeline'),
   document.querySelector('.sale-device'),
   document.querySelector('.history-visual'),
 ].filter(Boolean);
 
-const makeMotionStatic = () => motionTargets.forEach(target => {
+const makeOneShotMotionStatic = () => oneShotMotionTargets.forEach(target => {
   target.classList.remove('motion-run');
   target.classList.add('motion-static');
 });
@@ -73,19 +69,73 @@ if ('IntersectionObserver' in window && !reducedMotion.matches) {
       motionObserver.unobserve(entry.target);
     });
   }, { threshold: 0.26, rootMargin: '0px 0px -8%' });
-  motionTargets.forEach(target => motionObserver.observe(target));
+  oneShotMotionTargets.forEach(target => motionObserver.observe(target));
 } else {
-  makeMotionStatic();
+  makeOneShotMotionStatic();
+}
+
+const scrollStories = [
+  { element: document.querySelector('.operation-board'), attribute: 'data-flow-step', steps: 6 },
+  { element: document.querySelector('.team-stage'), attribute: 'data-team-step', steps: 4 },
+].filter(story => story.element);
+
+scrollStories.forEach(story => story.element.setAttribute('data-scroll-story', story.attribute));
+
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+let storyFrame = 0;
+
+const setStoryFinalState = () => {
+  scrollStories.forEach(story => story.element.setAttribute(story.attribute, String(story.steps)));
+};
+
+const updateStories = () => {
+  storyFrame = 0;
+  if (document.hidden) return;
+  if (reducedMotion.matches) {
+    setStoryFinalState();
+    return;
+  }
+
+  const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+  scrollStories.forEach(story => {
+    const rect = story.element.getBoundingClientRect();
+    const start = viewportHeight * 0.82;
+    const end = viewportHeight * 0.24;
+    const travel = Math.max(1, rect.height + start - end);
+    const progress = clamp((start - rect.top) / travel, 0, 1);
+    const step = clamp(Math.floor(progress * story.steps) + 1, 1, story.steps);
+    story.element.setAttribute(story.attribute, String(step));
+  });
+};
+
+const requestStoryUpdate = () => {
+  if (storyFrame || document.hidden) return;
+  storyFrame = requestAnimationFrame(updateStories);
+};
+
+if (scrollStories.length) {
+  if (reducedMotion.matches) setStoryFinalState();
+  else {
+    updateStories();
+    window.addEventListener('scroll', requestStoryUpdate, { passive: true });
+    window.addEventListener('resize', requestStoryUpdate);
+  }
 }
 
 const syncMotionVisibility = () => {
   document.documentElement.classList.toggle('motion-paused', document.hidden);
+  if (!document.hidden) requestStoryUpdate();
 };
 document.addEventListener('visibilitychange', syncMotionVisibility);
 syncMotionVisibility();
 
 if (typeof reducedMotion.addEventListener === 'function') {
   reducedMotion.addEventListener('change', event => {
-    if (event.matches) makeMotionStatic();
+    if (event.matches) {
+      makeOneShotMotionStatic();
+      setStoryFinalState();
+    } else {
+      requestStoryUpdate();
+    }
   });
 }
