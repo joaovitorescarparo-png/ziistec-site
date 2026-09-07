@@ -28,12 +28,9 @@ await rm(dist, { recursive: true, force: true });
 await mkdir(brandDir, { recursive: true });
 await cp(site, dist, { recursive: true });
 
-const baseCss = await readFile(join(site, 'styles.css'), 'utf8');
-const v2Css = await readFile(join(site, 'v2.css'), 'utf8');
-const v3Files = ['01-hero.css','02-operation.css','03-team.css','04-support.css','05-responsive.css','06-brand-motion.css'];
-const v3Css = await Promise.all(v3Files.map((name) => readFile(join(site, 'v3', name), 'utf8')));
-const v4Css = await readFile(join(site, 'v4.css'), 'utf8');
-await writeFile(join(dist, 'styles.css'), `${baseCss}\n${v2Css}\n${v3Css.join('\n')}\n${v4Css}`);
+const v3FinalFiles = ['01.css','02.css','03.css','04.css','05.css','06.css'];
+const v3FinalCss = await Promise.all(v3FinalFiles.map((name) => readFile(join(site, 'v3-final', name), 'utf8')));
+await writeFile(join(dist, 'styles.css'), v3FinalCss.join(''));
 
 const webLogo = await readFile(join(site, 'brand', 'ziistec-horizontal-light-web.png'));
 const webLogoSha = createHash('sha256').update(webLogo).digest('hex');
