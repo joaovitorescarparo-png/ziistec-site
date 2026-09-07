@@ -43,3 +43,9 @@
 @media (max-width:1020px){.team-grid,.field-sale-grid,.history-grid{grid-template-columns:1fr;gap:44px}.capability-wrap{grid-template-columns:1fr;gap:22px}}
 @media (max-width:760px){.pain-grid{grid-template-columns:1fr}.pain-card{min-height:0;padding:24px}.role-cards{grid-template-columns:1fr}.role-card{min-height:0}.role-card h3{margin-top:30px}.field-sale-grid{gap:54px}.history-grid{gap:38px}}
 @media (max-width:430px){.capability-wrap{padding:22px}.capability-list span{font-size:12px}.field-sale-visual{padding:20px}.sale-step{padding:14px}.sale-step small{font-size:11px}.sale-step strong{font-size:13px}.history-chain li{font-size:13px}}
+
+/* Accessibility and interaction */
+a:focus-visible,button:focus-visible{outline:3px solid #19a996;outline-offset:3px;border-radius:8px}
+.menu-button{min-width:46px;min-height:46px}
+.hero-trust{color:#596c77}
+@media (max-width:760px){.nav-links a{min-height:44px;display:flex;align-items:center}.nav-login{justify-content:center}.button{min-height:48px}}
