@@ -1,0 +1,30 @@
+/* ZiisTec Site 2.0 — progressive overrides. Keep the approved base design intact. */
+@media (max-width:760px){
+  .metric-card span{font-size:10px}
+}
+@media (max-width:430px){
+  .hero-actions{flex-direction:column}
+  .hero-trust{display:grid;grid-template-columns:1fr}
+  .product-stage{min-height:620px;align-items:flex-start;margin-top:22px;padding-bottom:92px}
+  .app-shell{grid-template-columns:46px 1fr}
+  .shell-sidebar{padding:18px 8px;min-height:430px}
+  .shell-main{padding:16px 10px}
+  .shell-top{align-items:flex-start;gap:8px}
+  .shell-top small{font-size:11px}
+  .shell-top strong{font-size:13px;line-height:1.35}
+  .avatar{width:32px;height:32px;flex:0 0 32px}
+  .metric-grid{grid-template-columns:1fr;gap:8px}
+  .metric-card,.metric-card:last-child{display:grid;grid-template-columns:1fr auto;grid-template-areas:"label value" "detail value";align-items:center;column-gap:12px;padding:10px 12px}
+  .metric-card span{grid-area:label;font-size:11px;line-height:1.25;white-space:normal;overflow:visible;text-overflow:clip}
+  .metric-card strong{grid-area:value;font-size:22px;margin:0}
+  .metric-card small{grid-area:detail;font-size:11px;line-height:1.35}
+  .work-card{padding:12px;margin-top:10px}
+  .work-head{gap:10px}
+  .work-head strong{font-size:12px}
+  .work-head span,.progress-row,.progress-row b{font-size:11px}
+  .floating-card{padding:9px 10px}
+  .floating-card small{font-size:11px;letter-spacing:.04em}
+  .floating-card strong{font-size:12px}
+  .float-one{top:auto;right:auto;left:0;bottom:48px}
+  .float-two{left:auto;right:0;bottom:0}
+}

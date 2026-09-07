@@ -27,6 +27,10 @@ await rm(dist, { recursive: true, force: true });
 await mkdir(brandDir, { recursive: true });
 await cp(site, dist, { recursive: true });
 
+const baseCss = await readFile(join(site, 'styles.css'), 'utf8');
+const v2Css = await readFile(join(site, 'v2.css'), 'utf8');
+await writeFile(join(dist, 'styles.css'), `${baseCss}\n${v2Css}`);
+
 for (const [name, expectedSha] of Object.entries(assets)) {
   const url = `https://raw.githubusercontent.com/${SOURCE_REPO}/${SOURCE_COMMIT}/public/brand/${name}`;
   const response = await fetch(url, { redirect: 'error' });
