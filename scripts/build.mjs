@@ -23,7 +23,8 @@ await mkdir(brandDir,{recursive:true});
 await cp(site,dist,{recursive:true});
 const v3Files=['01.css','02.css','03.css','04.css','05.css','06.css'];
 const v3Css=(await Promise.all(v3Files.map((name)=>readFile(join(site,'v3-final',name),'utf8')))).join('');
-await writeFile(join(dist,'styles.css'),v3Css);
+const conversionCss=await readFile(join(site,'v3-conversion.css'),'utf8');
+await writeFile(join(dist,'styles.css'),`${v3Css}\n${conversionCss}`);
 const webLogo=await readFile(join(site,'brand','ziistec-horizontal-light-web.png'));
 const webLogoSha=createHash('sha256').update(webLogo).digest('hex');
 if(webLogoSha!==WEB_LOGO_SHA256) throw new Error(`Integridade inválida no logo web trimmed: esperado ${WEB_LOGO_SHA256}, recebido ${webLogoSha}`);
@@ -40,4 +41,5 @@ for(const [name,expectedSha] of Object.entries(assets)){
 }
 const html=await readFile(join(dist,'index.html'),'utf8');
 if(!html.includes('/brand/ziistec-horizontal-light-web.png')) throw new Error('index.html não referencia a marca web trimmed');
-console.log('build ok  ZiisTec Site V3 pronto para publicação estática');
+if((html.match(/\/brand\/ziistec-icon\.png/g)||[]).length<5) throw new Error('Lockups de conversão não usam o símbolo oficial ZiisTec em quantidade esperada');
+console.log('build ok  ZiisTec Site V3 Conversion pronto para Preview');
