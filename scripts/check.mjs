@@ -2,12 +2,15 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 const root = new URL('..', import.meta.url).pathname;
-const required = ['index.html', 'styles.css', 'v2.css', 'script.js', 'privacidade.html', 'termos.html', 'robots.txt'];
+const required = ['index.html', 'styles.css', 'v2.css', 'script.js', 'privacidade.html', 'termos.html', '404.html', 'robots.txt', 'sitemap.xml', 'og/ziistec-og.png'];
 for (const file of required) await readFile(join(root, 'site', file));
 const html = await readFile(join(root, 'site', 'index.html'), 'utf8');
 const css = await readFile(join(root, 'site', 'styles.css'), 'utf8');
 const v2Css = await readFile(join(root, 'site', 'v2.css'), 'utf8');
 const script = await readFile(join(root, 'site', 'script.js'), 'utf8');
+const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
+const lock = JSON.parse(await readFile(join(root, 'package-lock.json'), 'utf8'));
+
 const mustHave = [
   'Seu serviço técnico, organizado',
   'do orçamento ao pós-venda.',
@@ -16,6 +19,7 @@ const mustHave = [
   'Conhecer a ZiisTec', 'Acesso em homologação', 'acesso@ziistec.com'
 ];
 for (const term of mustHave) if (!html.includes(term)) throw new Error(`Conteúdo obrigatório ausente: ${term}`);
+for (const seoTerm of ['twitter:card', 'og:image:width', '/og/ziistec-og.png']) if (!html.includes(seoTerm)) throw new Error(`SEO social ausente: ${seoTerm}`);
 
 const publicFiles = ['index.html', 'privacidade.html', 'termos.html', '404.html'];
 for (const file of publicFiles) {
@@ -25,8 +29,11 @@ for (const file of publicFiles) {
   }
 }
 
-if (!css.includes('@media (max-width:760px)')) throw new Error('Breakpoint mobile ausente');
+if (!css.includes('@media (max-width:760px)')) throw new Error('Breakpoint mobile base ausente');
 if (!v2Css.includes('@media (max-width:430px)')) throw new Error('Breakpoint mobile premium ausente');
 if (!v2Css.includes('.metric-card,.metric-card:last-child{display:grid')) throw new Error('Agenda deve permanecer visível em telas pequenas');
+if (!v2Css.includes(':focus-visible')) throw new Error('Tratamento de foco visível ausente');
 if (script.includes('.style')) throw new Error('JavaScript não deve criar inline styles sob a CSP atual');
-console.log('check ok  estrutura, conteúdo e breakpoint mobile presentes');
+if (pkg.engines?.node !== '24.x') throw new Error('Node deve permanecer fixado em 24.x');
+if (lock.lockfileVersion !== 3 || lock.packages?.['']?.engines?.node !== '24.x') throw new Error('package-lock não está alinhado ao Node 24.x');
+console.log('check ok  conteúdo, pré-lançamento, mobile, acessibilidade, SEO e build lockados');
