@@ -29,7 +29,9 @@ await cp(site, dist, { recursive: true });
 
 const baseCss = await readFile(join(site, 'styles.css'), 'utf8');
 const v2Css = await readFile(join(site, 'v2.css'), 'utf8');
-await writeFile(join(dist, 'styles.css'), `${baseCss}\n${v2Css}`);
+const v3Files = ['01-hero.css','02-operation.css','03-team.css','04-support.css','05-responsive.css','06-brand-motion.css'];
+const v3Css = (await Promise.all(v3Files.map((name) => readFile(join(site, 'v3', name), 'utf8')))).join('\n');
+await writeFile(join(dist, 'styles.css'), `${baseCss}\n${v2Css}\n${v3Css}`);
 
 for (const [name, expectedSha] of Object.entries(assets)) {
   const url = `https://raw.githubusercontent.com/${SOURCE_REPO}/${SOURCE_COMMIT}/public/brand/${name}`;
