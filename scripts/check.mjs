@@ -12,9 +12,18 @@ const mustHave = [
   'do orçamento ao pós-venda.',
   'Orçamentos', 'Ordens de serviço', 'Agenda', 'Equipe técnica',
   'Produtos e vendas', 'Financeiro', 'Histórico e garantias',
-  'https://app.ziistec.com'
+  'Conhecer a ZiisTec', 'Acesso em homologação', 'acesso@ziistec.com'
 ];
 for (const term of mustHave) if (!html.includes(term)) throw new Error(`Conteúdo obrigatório ausente: ${term}`);
+
+const publicFiles = ['index.html', 'privacidade.html', 'termos.html', '404.html'];
+for (const file of publicFiles) {
+  const content = await readFile(join(root, 'site', file), 'utf8');
+  if (/https?:\/\/app\.ziistec\.com/i.test(content)) {
+    throw new Error(`Host reservado app.ziistec.com não pode aparecer em links públicos: ${file}`);
+  }
+}
+
 if (!css.includes('@media (max-width:760px)')) throw new Error('Breakpoint mobile ausente');
 if (script.includes('.style')) throw new Error('JavaScript não deve criar inline styles sob a CSP atual');
-console.log('check ok  estrutura, conteúdo e breakpoint mobile presentes');
+console.log('check ok  estrutura, conteúdo, pré-lançamento e breakpoint mobile presentes');
