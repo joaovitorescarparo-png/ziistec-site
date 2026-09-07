@@ -2,55 +2,37 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-const root = new URL('..', import.meta.url).pathname;
-const required = ['index.html', 'styles.css', 'v2.css', 'v4.css', 'script.js', 'privacidade.html', 'termos.html', '404.html', 'robots.txt', 'sitemap.xml', 'og/ziistec-og.png', 'brand/ziistec-horizontal-light-web.png'];
-for (const file of required) await readFile(join(root, 'site', file));
-const html = await readFile(join(root, 'site', 'index.html'), 'utf8');
-const css = await readFile(join(root, 'site', 'styles.css'), 'utf8');
-const v2Css = await readFile(join(root, 'site', 'v2.css'), 'utf8');
-const v4Css = await readFile(join(root, 'site', 'v4.css'), 'utf8');
-const v3Files = ['01-hero.css','02-operation.css','03-team.css','04-support.css','05-responsive.css','06-brand-motion.css'];
-const v3Css = (await Promise.all(v3Files.map((name) => readFile(join(root, 'site', 'v3', name), 'utf8')))).join('\n');
-const script = await readFile(join(root, 'site', 'script.js'), 'utf8');
-const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
-const lock = JSON.parse(await readFile(join(root, 'package-lock.json'), 'utf8'));
-const webLogo = await readFile(join(root, 'site', 'brand', 'ziistec-horizontal-light-web.png'));
+const root=new URL('..',import.meta.url).pathname;
+const read=(p,enc='utf8')=>readFile(join(root,p),enc);
+const v3Files=['01.css','02.css','03.css','04.css','05.css','06.css'];
+const required=['site/index.html','site/v3-final.css',...v3Files.map((name)=>`site/v3-final/${name}`),'site/script.js','site/legal.css','site/privacidade.html','site/termos.html','site/404.html','site/robots.txt','site/sitemap.xml','site/og/ziistec-og.png','site/brand/ziistec-horizontal-light-web.png'];
+for(const f of required) await read(f,f.endsWith('.png')?null:'utf8');
+const html=await read('site/index.html');
+const css=(await Promise.all(v3Files.map((name)=>read(`site/v3-final/${name}`)))).join('');
+const script=await read('site/script.js');
+const pkg=JSON.parse(await read('package.json'));
+const lock=JSON.parse(await read('package-lock.json'));
+const logo=await read('site/brand/ziistec-horizontal-light-web.png',null);
 
-const mustHave = [
-  'Seu serviço inteiro', 'em um só lugar.', 'Software de gestão para prestadores de serviço',
-  'Menos WhatsApp perdido', 'Por que ZiisTec', 'Operação conectada',
-  'Comece sozinho. Estruture para crescer.',
-  'Eletricistas', 'ar-condicionado', 'Jardinagem', 'Equipes de campo',
-  'Conhecer a ZiisTec', 'Acesso em homologação', 'acesso@ziistec.com'
-];
-for (const term of mustHave) if (!html.includes(term)) throw new Error(`Conteúdo obrigatório ausente: ${term}`);
-for (const oldTerm of ['Gestão para a rotina técnica', 'Feita para serviço técnico', 'equipes técnicas']) {
-  if (html.includes(oldTerm)) throw new Error(`Posicionamento antigo regressou: ${oldTerm}`);
-}
-for (const seoTerm of ['<title>ZiisTec — Gestão para prestadores de serviço</title>', 'twitter:card', 'og:image:width', '/og/ziistec-og.png']) {
-  if (!html.includes(seoTerm)) throw new Error(`SEO/posicionamento ausente: ${seoTerm}`);
-}
-
-const publicFiles = ['index.html', 'privacidade.html', 'termos.html', '404.html'];
-for (const file of publicFiles) {
-  const content = await readFile(join(root, 'site', file), 'utf8');
-  if (/https?:\/\/app\.ziistec\.com/i.test(content)) {
-    throw new Error(`Host reservado app.ziistec.com não pode aparecer em links públicos: ${file}`);
-  }
-}
-
-if (!css.includes('@media (max-width:760px)')) throw new Error('Breakpoint mobile base ausente');
-if (!v2Css.includes('@media (max-width:430px)')) throw new Error('Breakpoint mobile premium ausente');
-if (!v4Css.includes('.brand.brand-web')) throw new Error('Uso robusto do logo web trimmed ausente');
-if (!v4Css.includes('[data-flow-step="6"]')) throw new Error('Storytelling por scroll da operação ausente');
-if (!v4Css.includes('[data-team-step="4"]')) throw new Error('Storytelling por scroll da equipe ausente');
-if (!v4Css.includes('@media (prefers-reduced-motion:reduce)')) throw new Error('Reduced-motion da revisão de posicionamento ausente');
-if (!script.includes('requestAnimationFrame(updateStories)') || !script.includes('data-scroll-story')) throw new Error('Controle leve de storytelling por scroll ausente');
-if (script.includes('.style')) throw new Error('JavaScript não deve criar inline styles sob a CSP atual');
-if (/animation\s*:[^;{}]*\binfinite\b/i.test(`${v3Css}\n${v4Css}`)) throw new Error('Motion infinito não é permitido');
-if (pkg.engines?.node !== '24.x') throw new Error('Node deve permanecer fixado em 24.x');
-if (lock.lockfileVersion !== 3 || lock.packages?.['']?.engines?.node !== '24.x') throw new Error('package-lock não está alinhado ao Node 24.x');
-const webLogoSha = createHash('sha256').update(webLogo).digest('hex');
-if (webLogoSha !== 'fed5c39249ad01f8b3f010d4988cf53590c094a93c609826e0cc35f52c44d1b6') throw new Error('Logo web trimmed divergiu do asset aprovado para esta branch');
-if (!html.includes('data-demo-media="future"') || !(`${v3Css}\n${v4Css}`).includes('pointer-events:none')) throw new Error('Poster da demo futura deve permanecer passivo');
-console.log('check ok  posicionamento, público amplo, marca, scroll storytelling, reduced-motion e pré-lançamento lockados');
+const mustHave=['Seu serviço inteiro','Gestão para prestadores de serviço e equipes de campo','Operação conectada','Veja como um serviço acontece','Quem administra acompanha','Comece sozinho. Continue quando crescer.','Financeiro ligado ao serviço','O atendimento termina. O histórico fica.','Planos de lançamento em validação','R$ 39,90','R$ 79,90','R$ 139,90','data-pricing-status="validation"','data-scroll-story="journey"','data-scroll-story="team"','data-showcase-tab'];
+for(const term of mustHave) if(!html.includes(term)) throw new Error(`Conteúdo V3 obrigatório ausente: ${term}`);
+const forbiddenPublic=[/https?:\/\/app\.ziistec\.com/i,/GPS em tempo real/i,/rastreamento de equipe/i,/ponto eletrônico/i,/folha de pagamento/i,/NFS-e integrada/i,/conciliação bancária automática/i,/checkout próprio/i,/adquirência própria/i,/10\.000 empresas/i,/melhor sistema do Brasil/i];
+for(const re of forbiddenPublic) if(re.test(html)) throw new Error(`Promessa/host proibido no site público: ${re}`);
+if(!html.includes('Rentabilidade por OS</span><b>Em homologação V2</b>')) throw new Error('Rentabilidade deve permanecer explicitamente em homologação');
+if(!html.includes('Calculadora independente de margem')||!html.includes('O que ainda não estamos vendendo como pronto')) throw new Error('Roadmap/limites de promessa ausentes');
+if(!html.includes('quotas e entitlements por plano ainda não são aplicadas pelo backend')) throw new Error('Pricing precisa declarar limites ainda não operacionais');
+if(!css.includes('@media (prefers-reduced-motion:reduce)')) throw new Error('Reduced motion ausente');
+if(/animation\s*:[^;{}]*\binfinite\b/i.test(css)) throw new Error('Motion infinito não permitido');
+if(script.includes('.style')) throw new Error('JS não deve criar inline style sob CSP');
+if(!script.includes("data-scroll-story")||!script.includes('requestAnimationFrame(updateStories)')) throw new Error('Scroll storytelling V3 ausente');
+if(!script.includes('visibilitychange')) throw new Error('Motion deve pausar quando aba está oculta');
+if(!html.includes('role="tablist"')||!html.includes('aria-selected="true"')) throw new Error('Showcase acessível ausente');
+if(!html.includes('skip-link')||!css.includes(':focus-visible')) throw new Error('Acessibilidade base regrediu');
+const structuralClasses=[...new Set([...html.matchAll(/class="([^"]+)"/g)].flatMap((m)=>m[1].split(/\s+/)).filter(Boolean))];
+const unstyledStructural=structuralClasses.filter((name)=>!new RegExp(`\\.${name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}(?![\\w-])`).test(css));
+if(unstyledStructural.length) throw new Error(`Classes V3 sem seletor no CSS canônico: ${unstyledStructural.join(', ')}`);
+if(pkg.engines?.node!=='24.x'||lock.packages?.['']?.engines?.node!=='24.x') throw new Error('Node/lock precisam permanecer em 24.x');
+const logoSha=createHash('sha256').update(logo).digest('hex');
+if(logoSha!=='fed5c39249ad01f8b3f010d4988cf53590c094a93c609826e0cc35f52c44d1b6') throw new Error('Logo trimmed divergiu');
+for(const file of ['site/index.html','site/privacidade.html','site/termos.html','site/404.html']){const content=await read(file);if(/https?:\/\/app\.ziistec\.com/i.test(content))throw new Error(`app.ziistec.com não pode aparecer: ${file}`);}
+console.log('check ok  Site V3: posicionamento, produto, pricing em validação, a11y, motion e promises guardados');
