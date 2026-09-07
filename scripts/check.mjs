@@ -32,6 +32,7 @@ for (const file of publicFiles) {
 if (!css.includes('@media (max-width:760px)')) throw new Error('Breakpoint mobile base ausente');
 if (!v2Css.includes('@media (max-width:430px)')) throw new Error('Breakpoint mobile premium ausente');
 if (!v2Css.includes('.metric-card,.metric-card:last-child{display:grid')) throw new Error('Agenda deve permanecer visível em telas pequenas');
+if (!v2Css.includes('.float-icon.money{font-size:11px}')) throw new Error('Rótulos do mockup mobile não podem regredir para texto operacional minúsculo');
 if (!v2Css.includes(':focus-visible')) throw new Error('Tratamento de foco visível ausente');
 if (script.includes('.style')) throw new Error('JavaScript não deve criar inline styles sob a CSP atual');
 if (pkg.engines?.node !== '24.x') throw new Error('Node deve permanecer fixado em 24.x');
