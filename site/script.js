@@ -34,8 +34,10 @@ if (menuButton && nav) {
 const year = document.getElementById('year');
 if (year) year.textContent = new Date().getFullYear();
 
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const targets = document.querySelectorAll('.reveal');
-if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+
+if ('IntersectionObserver' in window && !reducedMotion.matches) {
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -47,4 +49,43 @@ if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-mot
   targets.forEach(target => observer.observe(target));
 } else {
   targets.forEach(target => target.classList.add('visible'));
+}
+
+const motionTargets = [
+  document.querySelector('.product-stage-v3'),
+  document.querySelector('.operation-board'),
+  document.querySelector('.team-stage'),
+  document.querySelector('.day-timeline'),
+  document.querySelector('.sale-device'),
+  document.querySelector('.history-visual'),
+].filter(Boolean);
+
+const makeMotionStatic = () => motionTargets.forEach(target => {
+  target.classList.remove('motion-run');
+  target.classList.add('motion-static');
+});
+
+if ('IntersectionObserver' in window && !reducedMotion.matches) {
+  const motionObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('motion-run');
+      motionObserver.unobserve(entry.target);
+    });
+  }, { threshold: 0.26, rootMargin: '0px 0px -8%' });
+  motionTargets.forEach(target => motionObserver.observe(target));
+} else {
+  makeMotionStatic();
+}
+
+const syncMotionVisibility = () => {
+  document.documentElement.classList.toggle('motion-paused', document.hidden);
+};
+document.addEventListener('visibilitychange', syncMotionVisibility);
+syncMotionVisibility();
+
+if (typeof reducedMotion.addEventListener === 'function') {
+  reducedMotion.addEventListener('change', event => {
+    if (event.matches) makeMotionStatic();
+  });
 }
