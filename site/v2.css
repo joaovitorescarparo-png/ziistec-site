@@ -25,6 +25,7 @@
   .floating-card{padding:9px 10px}
   .floating-card small{font-size:11px;letter-spacing:.04em}
   .floating-card strong{font-size:12px}
+  .float-icon.money{font-size:11px}
   .float-one{top:auto;right:auto;left:0;bottom:48px}
   .float-two{left:auto;right:0;bottom:0}
 }
