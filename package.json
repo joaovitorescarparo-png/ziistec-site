@@ -4,7 +4,7 @@
   "private": true,
   "description": "Site institucional oficial da ZiisTec",
   "scripts": {
-    "check": "node scripts/check.mjs",
+    "check": "node scripts/check.mjs && node scripts/secret-scan.mjs",
     "prebuild": "npm run check && node --check site/script.js && node --check scripts/build.mjs",
     "build": "node scripts/build.mjs"
   },
