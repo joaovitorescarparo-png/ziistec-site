@@ -53,8 +53,11 @@ if((html.match(/\/brand\/ziistec-icon\.png/g)||[]).length<5) throw new Error('S�
 for(const cta of ['header-contact','hero-contact','workflow-contact','team-contact','pricing-essential','pricing-professional','pricing-company','final-contact']){
   if(!html.includes(`data-cta="${cta}"`)) throw new Error(`CTA analytics-ready ausente: ${cta}`);
 }
-if(!/data-cta="hero-contact"[^>]+href="mailto:acesso@ziistec\.com/i.test(html)) throw new Error('CTA principal do Hero precisa levar ao contato real');
-if(!/data-cta="pricing-professional"[^>]+href="mailto:acesso@ziistec\.com/i.test(html)) throw new Error('CTA Profissional precisa levar ao contato real');
+function ctaUsesMailto(name){
+  return new RegExp(`<a[^>]*(?:data-cta="${name}"[^>]*href="mailto:acesso@ziistec\\.com|href="mailto:acesso@ziistec\\.com[^>]*data-cta="${name}")[^>]*>`,`i`).test(html);
+}
+if(!ctaUsesMailto('hero-contact')) throw new Error('CTA principal do Hero precisa levar ao contato real');
+if(!ctaUsesMailto('pricing-professional')) throw new Error('CTA Profissional precisa levar ao contato real');
 if(!/data-cta="hero-product"[^>]+href="#produto"/i.test(html)) throw new Error('CTA secundário do Hero precisa levar à demonstração do produto');
 if((html.match(/<details>/g)||[]).length!==6||(html.match(/<summary>/g)||[]).length!==6) throw new Error('FAQ comercial precisa ter exatamente seis perguntas acessíveis');
 if(!css.includes('@media(prefers-reduced-motion:reduce)')&&!css.includes('@media (prefers-reduced-motion:reduce)')) throw new Error('Reduced motion ausente');
