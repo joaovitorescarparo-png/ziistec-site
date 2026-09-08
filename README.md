@@ -1,41 +1,53 @@
-# ZiisTec Site V3 Conversion
+# ZiisTec Site V3 Sales
 
 Site institucional estático da ZiisTec, separado da aplicação principal.
 
 ## Base e objetivo
 
-A branch `site-v3-conversion` parte do checkpoint aprovado `7b6408ed9b0b383d1383f5e6dc9fc10c6043a40a` e mantém a arquitetura visual do Site V3. Esta rodada é cirúrgica: marca, copy, hierarquia comercial e CTAs para aumentar compreensão e intenção de contato sem alterar o escopo real do produto.
+A branch `site-v3-sales` parte exatamente do checkpoint `505125098e5b47aabec0425964c86a83b21970e1` da V3 Conversion aprovada. Esta rodada não redesenha o site: trabalha dor, valor percebido, objeções, CTA e hierarquia comercial para aumentar intenção de contato.
 
 ## Posicionamento
 
 Gestão para prestadores de serviço e equipes de campo. A página vende **operação conectada**, não uma lista de módulos: cliente → orçamento → OS/agenda → execução → venda/financeiro → histórico/pós-venda.
 
-## Marca
+## Canal comercial
 
-- Header, CTA final e footer mantêm o lockup horizontal web aprovado.
-- Lockups internos que antes desenhavam um `Z` por CSS agora usam `/brand/ziistec-icon.png`, o símbolo oficial da aplicação, baixado do commit fixo da plataforma e validado pelo build.
-- O derivado `site/brand/ziistec-horizontal-light-web.png` continua validado por SHA-256 e sem redesenho da identidade.
+Não existe no repositório uma origem oficial comprovada de WhatsApp comercial (`whatsapp`, `wa.me` ou endpoint equivalente). Por isso os CTAs continuam usando o contato real `acesso@ziistec.com`, com assuntos específicos por origem e `data-cta` analytics-ready. Nenhum tracker foi instalado.
 
-## Conversão
+## Sales pass
 
-- CTA principal do Hero usa o contato real `acesso@ziistec.com`; o CTA secundário leva à demonstração do produto.
-- CTAs principais recebem `data-cta` sem instalar analytics, pixels ou trackers.
-- Há CTAs discretos após jornada/equipe e nos planos, sem checkout ou promessa de contratação pública.
-- O plano Profissional permanece R$ 79,90 e recebe hierarquia visual maior, sem alterar preços ou esconder os planos laterais.
+- Hero preserva `Seu serviço inteiro em um só lugar.` e reforça consequência: menos informação perdida e mais controle por serviço.
+- Operação fragmentada ganha uma comparação curta `ANTES DA ZIISTEC` → `COM A ZIISTEC`.
+- `Por que ZiisTec` passa a responder por menos retrabalho, mais controle, mais profissionalismo e preparo para crescer.
+- Orçamento vira porta de entrada comercial: o serviço aprovado continua para a OS sem recadastro.
+- Catálogo vende reutilização de produtos/serviços, não apenas cadastro.
+- Equipe vende acompanhamento sem depender de mensagens para descobrir o que aconteceu no campo.
+- Histórico usa o cenário concreto de retorno do cliente meses depois.
+- Financeiro usa linguagem de recebimento/saída e mantém rentabilidade por OS explicitamente em homologação.
+- FAQ comercial usa `details/summary` nativos, com seis objeções reais e respostas baseadas no capability audit.
+- Profissional continua em R$ 79,90 e recebe contexto de valor: R$ 40 acima do Essencial e cerca de R$ 2,66/dia considerando 30 dias, sem promessa de retorno financeiro.
 
-## Capability safety
+## Pricing e capability safety
 
-As promessas públicas seguem `docs/CAPABILITY_AUDIT_V3.md`. Rentabilidade por OS permanece marcada como **em homologação**. Calculadora independente de margem, relatório profissional de atendimento, NFS-e/fiscal, conciliação bancária, checkout e quotas operacionais não são apresentados como disponíveis.
+Preços permanecem:
 
-Pricing continua explicitamente **em validação**. O Preview não cobra nem altera assinatura/plataforma.
+- Essencial — R$ 39,90/mês
+- Profissional — R$ 79,90/mês — MAIS ESCOLHIDO
+- Empresa — R$ 139,90/mês
+
+Limites e contratação pública continuam marcados como em validação. O Preview não cobra nem altera assinatura/plataforma.
+
+As promessas públicas seguem `docs/CAPABILITY_AUDIT_V3.md`. Rentabilidade por OS permanece **em homologação**. Calculadora independente de margem, relatório profissional de atendimento, NFS-e/fiscal, conciliação bancária, checkout e quotas operacionais não são vendidos como disponíveis.
 
 ## Arquitetura
 
 - HTML + CSS + JavaScript pequeno; sem framework de runtime.
 - `site/v3-final/01.css` … `06.css` permanecem intactos como base V3.
-- `site/v3-conversion.css` é uma camada curta de marca/hierarquia/conversão adicionada depois do CSS V3 no build.
-- `prefers-reduced-motion: reduce` e o storytelling V3 permanecem preservados.
-- O `prebuild` executa check e validação de sintaxe antes do build Vercel.
+- `site/v3-conversion.css` preserva a camada de branding/conversão anterior.
+- `site/v3-sales.css` adiciona apenas comparação de rotina, FAQ e hierarquia comercial.
+- `scripts/sales-transform.mjs` aplica a copy Sales de forma determinística no artefato de Preview; o build falha se o HTML-base divergir dos trechos esperados.
+- `site/script.js` permanece responsável apenas por menu, reveal, tabs e storytelling existentes; nenhuma animação nova foi adicionada.
+- `prefers-reduced-motion: reduce` permanece preservado.
 
 ## Gates
 
