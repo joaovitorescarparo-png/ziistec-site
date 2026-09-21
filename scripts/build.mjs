@@ -2,6 +2,7 @@ import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assertValidPng, gitBlobSha, inspectPng, sha256 } from './png-integrity.mjs';
+import { verifyFonts } from './font-integrity.mjs';
 
 const here=dirname(fileURLToPath(import.meta.url));
 const root=join(here,'..');
@@ -35,7 +36,14 @@ const v3Files=['01.css','02.css','03.css','04.css','05.css','06.css'];
 const v3Css=(await Promise.all(v3Files.map((name)=>readFile(join(site,'v3-final',name),'utf8')))).join('');
 const conversionCss=await readFile(join(site,'v3-conversion.css'),'utf8');
 const salesCss=await readFile(join(site,'v3-sales.css'),'utf8');
-await writeFile(join(dist,'styles.css'),`${v3Css}\n${conversionCss}\n${salesCss}`);
+// Camada v4: entra por último para vencer o legado conforme a Fase 3 avança.
+// Hoje contém apenas @font-face e custom properties — inerte sobre o markup atual.
+const v4Files=['00-fonts.css','01-tokens.css'];
+const v4Css=(await Promise.all(v4Files.map((name)=>readFile(join(site,'v4',name),'utf8')))).join('\n');
+await writeFile(join(dist,'styles.css'),`${v3Css}\n${conversionCss}\n${salesCss}\n${v4Css}`);
+
+const verifiedFonts=await verifyFonts(join(site,'fonts'));
+for(const font of verifiedFonts) console.log(`font ok  ${font.file}  ${font.bytes} bytes  ${font.family} ${font.weight}  WOFF2 íntegro`);
 
 // site/index.html é a fonte real do HTML publicado. Nenhuma transformação por string acontece no build.
 const sourceHtml=await readFile(join(site,'index.html'),'utf8');

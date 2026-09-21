@@ -10,6 +10,7 @@ const files=[
   'scripts/build.mjs',
   'scripts/check.mjs',
   'scripts/png-integrity.mjs',
+  'scripts/font-integrity.mjs',
   'site/privacidade.html',
   'site/termos.html',
   'site/404.html'

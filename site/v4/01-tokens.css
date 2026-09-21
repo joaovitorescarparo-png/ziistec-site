@@ -1,0 +1,124 @@
+/* ZiisTec v4 — tokens do design congelado (Desktop v2 / Mobile v2) + delta do Design System.
+   Prefixo --zt- para não colidir com os tokens legados da V3 (--navy, --aqua, --ink, --radius…).
+   Esta camada declara apenas custom properties: enquanto o markup da Fase 3 não usar nenhuma
+   delas, a página publicada continua pixel a pixel igual. */
+
+:root{
+  /* ---- Cor · tema claro (site comercial) ---- */
+  --zt-surface-100:#ffffff;
+  --zt-surface-200:#f4f6f6;
+  --zt-border:#e3e7e7;
+  --zt-border-interactive:#c9d1d1;   /* borda de botão secundário */
+  --zt-divider-200:#d9dfdf;          /* filete legível sobre surface-200 */
+  --zt-icon-muted:#b9c1c2;           /* ícones e setas de apoio */
+  --zt-ink:#14181a;
+  --zt-ink-muted:#5b6668;
+
+  /* ---- Cor · superfície escura (painel de produto, CTA final, rodapé) ---- */
+  --zt-dark-surface-100:#101314;
+  --zt-dark-surface-200:#181d1e;
+  --zt-dark-border:#262d30;
+  --zt-dark-border-strong:#3a4448;
+  --zt-dark-ink:#eef2f2;
+  --zt-dark-ink-muted:#8b9799;
+
+  /* ---- Marca · teal do símbolo Z verificado ---- */
+  --zt-brand:#08d7c9;                /* preenchimentos, indicadores, selos */
+  --zt-brand-strong:#56f1dd;         /* texto/link seguro no escuro */
+  --zt-brand-deep:#017885;           /* texto/link seguro no claro */
+  --zt-brand-deep-hover:#015f6a;     /* hover do botão primário */
+  --zt-brand-tint:rgba(8,215,201,.12);
+  --zt-accent-status:#f2a93b;        /* somente selo de status */
+
+  /* ---- Tipografia ---- */
+  --zt-font-display:"Space Grotesk",sans-serif;
+  --zt-font-body:"IBM Plex Sans",system-ui,sans-serif;
+  --zt-font-data:"IBM Plex Mono",ui-monospace,monospace;
+
+  /* Escala de marketing — valores desktop; o bloco responsivo abaixo troca para mobile */
+  --zt-text-display-xl:58px;
+  --zt-leading-display-xl:1.05;
+  --zt-text-display-lg:36px;
+  --zt-leading-display-lg:1.14;
+  --zt-text-display-md:21px;
+  --zt-text-display-sm:17px;
+  --zt-text-lead:18px;
+  --zt-text-body:16px;
+  --zt-text-sm:14px;
+  --zt-text-xs:12px;
+  --zt-text-kicker:12px;
+  --zt-text-label:10px;
+  --zt-tracking-display:-.025em;
+  --zt-tracking-kicker:.12em;
+
+  /* ---- Espaçamento ---- */
+  --zt-space-1:4px;
+  --zt-space-2:8px;
+  --zt-space-3:12px;
+  --zt-space-4:16px;
+  --zt-space-6:24px;
+  --zt-space-8:32px;
+  --zt-space-12:48px;
+  --zt-space-16:64px;   /* novo: ritmo de seção */
+  --zt-space-20:80px;   /* novo */
+  --zt-space-24:96px;   /* novo: margem lateral desktop */
+
+  /* ---- Raio (modesto, nunca pílula) ---- */
+  --zt-radius-sm:6px;
+  --zt-radius-md:10px;
+  --zt-radius-lg:16px;
+
+  /* ---- Elevação ---- */
+  --zt-elev-1:0 1px 2px rgba(20,24,26,.04);
+  --zt-elev-2:0 10px 26px rgba(20,24,26,.10);
+  --zt-elev-brand:0 12px 32px rgba(1,120,133,.14);
+  --zt-elev-cta:0 8px 20px rgba(1,120,133,.22);
+
+  /* ---- Foco visível ---- */
+  --zt-focus-ring:0 0 0 2px #ffffff,0 0 0 4px #017885;
+  --zt-focus-ring-dark:0 0 0 2px #101314,0 0 0 4px #56f1dd;
+
+  /* ---- Movimento (inventário aprovado; nada fora disto) ---- */
+  --zt-motion-instant:90ms;
+  --zt-motion-quick:160ms;
+  --zt-motion-base:240ms;
+  --zt-motion-enter:420ms;
+  --zt-motion-stagger:70ms;
+  --zt-ease-standard:cubic-bezier(.2,0,0,1);
+  --zt-ease-exit:cubic-bezier(.4,0,1,1);
+  --zt-rise:12px;
+  --zt-rise-lg:20px;
+}
+
+/* Escala tipográfica no mobile. Só troca valores de token — nenhum elemento é estilizado aqui. */
+@media (max-width:640px){
+  :root{
+    --zt-text-display-xl:33px;
+    --zt-leading-display-xl:1.08;
+    --zt-text-display-lg:26px;
+    --zt-leading-display-lg:1.16;
+    --zt-text-display-md:19px;
+    --zt-text-display-sm:16px;
+    --zt-text-lead:16px;
+    --zt-text-body:15px;
+    --zt-text-sm:13px;
+    --zt-text-xs:11px;
+    --zt-text-kicker:11px;
+    --zt-tracking-display:-.022em;
+    --zt-tracking-kicker:.11em;
+  }
+}
+
+/* Movimento reduzido: os tokens de tempo zeram na origem, para que a Fase 4 herde o
+   comportamento correto sem precisar repetir a media query em cada regra. */
+@media (prefers-reduced-motion:reduce){
+  :root{
+    --zt-motion-instant:0ms;
+    --zt-motion-quick:0ms;
+    --zt-motion-base:0ms;
+    --zt-motion-enter:0ms;
+    --zt-motion-stagger:0ms;
+    --zt-rise:0px;
+    --zt-rise-lg:0px;
+  }
+}

@@ -1,17 +1,20 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { fonts as approvedFonts, licenses as fontLicenses, verifyFonts } from './font-integrity.mjs';
 
 const root=new URL('..',import.meta.url).pathname;
 const read=(p,enc='utf8')=>readFile(join(root,p),enc);
 const v3Files=['01.css','02.css','03.css','04.css','05.css','06.css'];
-const required=['site/index.html','site/v3-final.css',...v3Files.map((name)=>`site/v3-final/${name}`),'site/v3-conversion.css','site/v3-sales.css','site/script.js','scripts/png-integrity.mjs','site/legal.css','site/privacidade.html','site/termos.html','site/404.html','site/robots.txt','site/sitemap.xml','site/og/ziistec-og.png','site/brand/ziistec-horizontal-light-web.png'];
+const required=['site/index.html','site/v3-final.css',...v3Files.map((name)=>`site/v3-final/${name}`),'site/v3-conversion.css','site/v3-sales.css','site/script.js','scripts/png-integrity.mjs','scripts/font-integrity.mjs','site/v4/00-fonts.css','site/v4/01-tokens.css','site/fonts/SOURCES.md',...approvedFonts.map((f)=>`site/fonts/${f.file}`),...fontLicenses.map((f)=>`site/fonts/${f}`),'site/legal.css','site/privacidade.html','site/termos.html','site/404.html','site/robots.txt','site/sitemap.xml','site/og/ziistec-og.png','site/brand/ziistec-horizontal-light-web.png'];
 for(const f of required) await read(f,f.endsWith('.png')?null:'utf8');
 // site/index.html é a fonte real do HTML publicado: o que se valida aqui é exatamente o que vai ao ar.
 const html=await read('site/index.html');
 const conversionCss=await read('site/v3-conversion.css');
 const salesCss=await read('site/v3-sales.css');
-const css=`${(await Promise.all(v3Files.map((name)=>read(`site/v3-final/${name}`)))).join('')}\n${conversionCss}\n${salesCss}`;
+const v4Files=['00-fonts.css','01-tokens.css'];
+const v4Css=(await Promise.all(v4Files.map((name)=>read(`site/v4/${name}`)))).join('\n');
+const css=`${(await Promise.all(v3Files.map((name)=>read(`site/v3-final/${name}`)))).join('')}\n${conversionCss}\n${salesCss}\n${v4Css}`;
 const script=await read('site/script.js');
 const pkg=JSON.parse(await read('package.json'));
 const lock=JSON.parse(await read('package-lock.json'));
@@ -96,4 +99,13 @@ for(const file of ['site/index.html','site/privacidade.html','site/termos.html',
   const content=await read(file);
   if(/https?:\/\/app\.ziistec\.com/i.test(content)) throw new Error(`app.ziistec.com não pode aparecer: ${file}`);
 }
-console.log('check ok  Site V3 Sales: dor, valor, FAQ, CTA, pricing, marca, a11y, motion e promises guardados');
+await verifyFonts(join(root,'site/fonts'));
+if((v4Css.match(/@font-face/g)||[]).length!==approvedFonts.length) throw new Error(`Camada v4 precisa declarar exatamente ${approvedFonts.length} @font-face aprovadas`);
+for(const font of approvedFonts) if(!v4Css.includes(`/fonts/${font.file}`)) throw new Error(`@font-face ausente para ${font.file}`);
+// CSP: nenhuma folha publicada pode buscar recurso externo (fonte, imagem ou import).
+const externalCssRefs=[...css.matchAll(/url\(\s*['\"]?(https?:)?\/\//gi)].map((m)=>m[0]);
+if(externalCssRefs.length) throw new Error(`CSS publicado não pode referenciar host externo: ${externalCssRefs.join(', ')}`);
+if(/@import\s+url\(\s*['\"]?https?:/i.test(css)) throw new Error('CSS publicado não pode importar folha externa');
+const requiredTokens=['--zt-brand:','--zt-brand-deep:','--zt-brand-deep-hover:','--zt-brand-tint:','--zt-ink:','--zt-ink-muted:','--zt-border-interactive:','--zt-divider-200:','--zt-icon-muted:','--zt-dark-surface-100:','--zt-focus-ring:','--zt-elev-1:','--zt-elev-brand:','--zt-motion-base:','--zt-ease-standard:','--zt-rise:','--zt-space-16:','--zt-space-24:','--zt-text-display-xl:','--zt-font-display:'];
+for(const token of requiredTokens) if(!v4Css.includes(token)) throw new Error(`Token v4 obrigatório ausente: ${token}`);
+console.log('check ok  Site V3 Sales: dor, valor, FAQ, CTA, pricing, marca, a11y, motion e promises guardados | v4: fontes OFL, tokens e CSP verificados');
