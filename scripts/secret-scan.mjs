@@ -7,7 +7,8 @@ const files=[
   'site/script.js',
   'site/v3-conversion.css',
   'site/v3-sales.css',
-  'scripts/sales-transform.mjs',
+  'scripts/build.mjs',
+  'scripts/check.mjs',
   'site/privacidade.html',
   'site/termos.html',
   'site/404.html'
