@@ -5,7 +5,7 @@ import { join } from 'node:path';
 const root=new URL('..',import.meta.url).pathname;
 const read=(p,enc='utf8')=>readFile(join(root,p),enc);
 const v3Files=['01.css','02.css','03.css','04.css','05.css','06.css'];
-const required=['site/index.html','site/v3-final.css',...v3Files.map((name)=>`site/v3-final/${name}`),'site/v3-conversion.css','site/v3-sales.css','site/script.js','site/legal.css','site/privacidade.html','site/termos.html','site/404.html','site/robots.txt','site/sitemap.xml','site/og/ziistec-og.png','site/brand/ziistec-horizontal-light-web.png'];
+const required=['site/index.html','site/v3-final.css',...v3Files.map((name)=>`site/v3-final/${name}`),'site/v3-conversion.css','site/v3-sales.css','site/script.js','scripts/png-integrity.mjs','site/legal.css','site/privacidade.html','site/termos.html','site/404.html','site/robots.txt','site/sitemap.xml','site/og/ziistec-og.png','site/brand/ziistec-horizontal-light-web.png'];
 for(const f of required) await read(f,f.endsWith('.png')?null:'utf8');
 // site/index.html é a fonte real do HTML publicado: o que se valida aqui é exatamente o que vai ao ar.
 const html=await read('site/index.html');
@@ -37,8 +37,16 @@ const mustHave=[
 ];
 for(const term of mustHave) if(!html.includes(term)) throw new Error(`Conteúdo Sales obrigatório ausente: ${term}`);
 
+// Canal comercial oficial aprovado (21/09/2026). É o ÚNICO destino WhatsApp permitido no site:
+// qualquer outro número, link encurtado ou mensagem diferente reprova o build.
+const APPROVED_WHATSAPP='https://wa.me/5547991797202?text=Ol%C3%A1%21%20Vim%20pelo%20site%20da%20ZiisTec%20e%20quero%20conhecer%20melhor%20a%20plataforma.';
+const whatsappLinks=[...html.matchAll(/https?:\/\/(?:wa\.me|api\.whatsapp\.com|whatsapp\.com|chat\.whatsapp\.com)[^"'\s>]*/gi)].map((m)=>m[0]);
+for(const link of whatsappLinks) if(link!==APPROVED_WHATSAPP) throw new Error(`Destino WhatsApp não aprovado: ${link}`);
+const rawPhones=[...html.matchAll(/(?:\+?55\s?)?\(?4[79]\)?\s?9?\d{4}[-\s]?\d{4}/g)].map((m)=>m[0]);
+for(const phone of rawPhones) if(!/99179[-\s]?7202/.test(phone)) throw new Error(`Telefone comercial não aprovado no site: ${phone}`);
+
 const forbiddenPublic=[
-  /https?:\/\/app\.ziistec\.com/i,/https?:\/\/(?:wa\.me|api\.whatsapp\.com)/i,/GPS em tempo real/i,/rastreamento de equipe/i,/ponto eletrônico/i,/folha de pagamento/i,
+  /https?:\/\/app\.ziistec\.com/i,/GPS em tempo real/i,/rastreamento de equipe/i,/ponto eletrônico/i,/folha de pagamento/i,
   /NFS-e integrada/i,/conciliação bancária automática/i,/checkout próprio/i,/adquirência própria/i,/10\.000 empresas/i,/melhor sistema do Brasil/i,
   /\bledgers?\b/i,/\bbackend\b/i,/\bentitlements?\b/i,/\bmigrations?\b/i,/\bRLS\b/i,/\bidempotente\b/i,/\bV2\b/i,
   /Comprar agora/i,/Assinar agora/i,/Começar grátis/i,/Quero testar a ZiisTec/i,/teste grátis/i,/sem cartão/i
@@ -52,6 +60,17 @@ if((html.match(/\/brand\/ziistec-icon\.png/g)||[]).length<5) throw new Error('S�
 for(const cta of ['header-contact','hero-contact','workflow-contact','team-contact','pricing-essential','pricing-professional','pricing-company','final-contact']){
   if(!html.includes(`data-cta="${cta}"`)) throw new Error(`CTA analytics-ready ausente: ${cta}`);
 }
+// Todo destino externo precisa ser um canal comercial real e aprovado.
+// Não existe cadastro, checkout, cobrança ou gateway no site — nem como link.
+const externalHrefs=[...html.matchAll(/href="((?:https?:|mailto:)[^"]*)"/gi)].map((m)=>m[1]);
+for(const href of externalHrefs){
+  const approved=href===APPROVED_WHATSAPP
+    ||href.startsWith('mailto:acesso@ziistec.com')
+    ||href==='https://ziistec.com/';
+  if(!approved) throw new Error(`Destino externo não aprovado: ${href}`);
+}
+const forbiddenDestinations=/href="[^"]*(?:checkout|signup|sign-up|assinar|pagamento|pagar|stripe|mercadopago|mercadolivre|pagseguro|asaas|hotmart|calendly|typeform|forms\.gle)/i;
+if(forbiddenDestinations.test(html)) throw new Error('Destino de cadastro/checkout/pagamento não permitido no site');
 function ctaUsesMailto(name){
   return new RegExp(`<a[^>]*(?:data-cta="${name}"[^>]*href="mailto:acesso@ziistec\\.com|href="mailto:acesso@ziistec\\.com[^>]*data-cta="${name}")[^>]*>`,`i`).test(html);
 }

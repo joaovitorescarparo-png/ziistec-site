@@ -12,7 +12,9 @@ Gestão para prestadores de serviço e equipes de campo. A página vende **opera
 
 ## Canal comercial
 
-Não existe no repositório uma origem oficial comprovada de WhatsApp comercial (`whatsapp`, `wa.me` ou endpoint equivalente). Por isso os CTAs continuam usando o contato real `acesso@ziistec.com`, com assuntos específicos por origem e `data-cta` analytics-ready. Nenhum tracker foi instalado.
+O canal comercial oficial aprovado é o WhatsApp `https://wa.me/5547991797202`, com a mensagem pré-preenchida aprovada. O gate (`scripts/check.mjs`) aceita **exatamente** essa URL: qualquer outro número, encurtador ou mensagem diferente reprova o build, assim como qualquer destino de cadastro, checkout ou pagamento.
+
+Os CTAs atuais ainda usam `acesso@ziistec.com`; a troca para WhatsApp acontece junto com a implementação da homepage v4 (Fase 3). Os atributos `data-cta` analytics-ready permanecem. Nenhum tracker foi instalado.
 
 ## Sales pass
 
@@ -45,7 +47,8 @@ As promessas públicas seguem `docs/CAPABILITY_AUDIT_V3.md`. Rentabilidade por O
 - `site/v3-final/01.css` … `06.css` permanecem intactos como base V3.
 - `site/v3-conversion.css` preserva a camada de branding/conversão anterior.
 - `site/v3-sales.css` adiciona apenas comparação de rotina, FAQ e hierarquia comercial.
-- `scripts/sales-transform.mjs` aplica a copy Sales de forma determinística no artefato de Preview; o build falha se o HTML-base divergir dos trechos esperados.
+- `site/index.html` é a **fonte real do HTML publicado**: o build copia, não transforma. A antiga camada `scripts/sales-transform.mjs` (substituição por string) foi aposentada para permitir a implementação da homepage v4 sem quebrar dezenas de trechos exatos.
+- `scripts/png-integrity.mjs` verifica se um PNG realmente renderiza (assinatura, CRC de cada chunk e terminador IEND), além do hash pinado. Três ativos de marca da origem (`ziistec-icon.png`, `ziistec-horizontal-light.png`, `ziistec-horizontal-dark.png`) estão **corrompidos na origem** e seguem em quarentena até a Fase 3, quando o markup deixar de referenciá-los.
 - `site/script.js` permanece responsável apenas por menu, reveal, tabs e storytelling existentes; nenhuma animação nova foi adicionada.
 - `prefers-reduced-motion: reduce` permanece preservado.
 

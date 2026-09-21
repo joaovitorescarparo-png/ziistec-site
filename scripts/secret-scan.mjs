@@ -9,6 +9,7 @@ const files=[
   'site/v3-sales.css',
   'scripts/build.mjs',
   'scripts/check.mjs',
+  'scripts/png-integrity.mjs',
   'site/privacidade.html',
   'site/termos.html',
   'site/404.html'
