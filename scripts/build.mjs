@@ -1,7 +1,7 @@
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertValidPng, gitBlobSha, inspectPng, sha256 } from './png-integrity.mjs';
+import { assertValidPng, gitBlobSha, inspectPng, sha256, verifyQuarantinedOg } from './png-integrity.mjs';
 import { verifyFonts } from './font-integrity.mjs';
 
 const here=dirname(fileURLToPath(import.meta.url));
@@ -73,6 +73,9 @@ for(const [name,expectedSha] of Object.entries(verifiedAssets)){
 }
 
 const quarantineReport=[];
+const ogReport=verifyQuarantinedOg(await readFile(join(dist,'og','ziistec-og.png')));
+quarantineReport.push(`ziistec-og.png: ${ogReport.problems.join('; ')}`);
+console.warn(`OG QUARENTENA  ziistec-og.png  hash preservado; PNG CORROMPIDO — ${ogReport.problems.join('; ')}`);
 for(const [name,expectedSha] of Object.entries(quarantinedAssets)){
   const {buffer,actualSha}=await fetchAsset(name,expectedSha);
   const report=inspectPng(buffer);
@@ -84,7 +87,7 @@ for(const [name,expectedSha] of Object.entries(quarantinedAssets)){
   }
 }
 if(quarantineReport.length){
-  console.warn(`\n⚠  ${quarantineReport.length} ativo(s) de marca corrompido(s) na origem continuam publicados porque o HTML atual ainda os referencia:`);
+  console.warn(`\n⚠  ${quarantineReport.length} ativo(s) legado(s) corrompido(s) em quarentena continuam publicados para preservar a saída atual:`);
   for(const line of quarantineReport) console.warn(`   - ${line}`);
   console.warn('   Remoção prevista na Fase 3, junto com as referências no markup. Nenhum substituto pode ser fabricado.\n');
 }

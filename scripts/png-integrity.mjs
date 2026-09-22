@@ -11,6 +11,15 @@ export function sha256(buffer){
   return createHash('sha256').update(buffer).digest('hex');
 }
 
+// Exceção temporária e restrita aos bytes legados usados por og:image/twitter:image.
+// Não aprova PNGs novos/corrompidos: qualquer alteração exige revisão da quarentena.
+// Contexto e critérios de saída: docs/PNG_QUARANTINE.md.
+export function verifyQuarantinedOg(buffer){
+  const expected='ed9edc83f8abfd68bb05351ca7b769573b267748b1200ace1ef2c5ec8f443ddf';
+  if(sha256(buffer)!==expected) throw new Error('Integridade inválida no OG em quarentena: ziistec-og.png mudou');
+  return inspectPng(buffer);
+}
+
 // Integridade de hash prova apenas que o arquivo é o esperado.
 // Esta verificação prova que o arquivo é um PNG que o navegador consegue renderizar:
 // assinatura correta, todos os chunks com CRC válido e terminador IEND presente.

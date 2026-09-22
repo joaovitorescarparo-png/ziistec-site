@@ -1,13 +1,17 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { verifyQuarantinedOg } from './png-integrity.mjs';
 import { fonts as approvedFonts, licenses as fontLicenses, verifyFonts } from './font-integrity.mjs';
 
-const root=new URL('..',import.meta.url).pathname;
+const root=fileURLToPath(new URL('..',import.meta.url));
 const read=(p,enc='utf8')=>readFile(join(root,p),enc);
 const v3Files=['01.css','02.css','03.css','04.css','05.css','06.css'];
 const required=['site/index.html','site/v3-final.css',...v3Files.map((name)=>`site/v3-final/${name}`),'site/v3-conversion.css','site/v3-sales.css','site/script.js','scripts/png-integrity.mjs','scripts/font-integrity.mjs','site/v4/00-fonts.css','site/v4/01-tokens.css','site/fonts/SOURCES.md',...approvedFonts.map((f)=>`site/fonts/${f.file}`),...fontLicenses.map((f)=>`site/fonts/${f}`),'site/legal.css','site/privacidade.html','site/termos.html','site/404.html','site/robots.txt','site/sitemap.xml','site/og/ziistec-og.png','site/brand/ziistec-horizontal-light-web.png'];
 for(const f of required) await read(f,f.endsWith('.png')?null:'utf8');
+const ogReport=verifyQuarantinedOg(await read('site/og/ziistec-og.png',null));
+console.warn(`OG QUARENTENA  ziistec-og.png  hash preservado; ${ogReport.problems.join('; ')}`);
 // site/index.html é a fonte real do HTML publicado: o que se valida aqui é exatamente o que vai ao ar.
 const html=await read('site/index.html');
 const conversionCss=await read('site/v3-conversion.css');
