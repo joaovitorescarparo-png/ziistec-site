@@ -48,7 +48,7 @@ As promessas públicas seguem `docs/CAPABILITY_AUDIT_V3.md`. Rentabilidade por O
 - `site/v3-conversion.css` preserva a camada de branding/conversão anterior.
 - `site/v3-sales.css` adiciona apenas comparação de rotina, FAQ e hierarquia comercial.
 - `site/index.html` é a **fonte real do HTML publicado**: o build copia, não transforma. A antiga camada `scripts/sales-transform.mjs` (substituição por string) foi aposentada para permitir a implementação da homepage v4 sem quebrar dezenas de trechos exatos.
-- `scripts/png-integrity.mjs` verifica se um PNG realmente renderiza (assinatura, CRC de cada chunk e terminador IEND), além do hash pinado. Três ativos de marca da origem (`ziistec-icon.png`, `ziistec-horizontal-light.png`, `ziistec-horizontal-dark.png`) estão **corrompidos na origem** e seguem em quarentena até a Fase 3, quando o markup deixar de referenciá-los.
+- `scripts/png-integrity.mjs` verifica se um PNG realmente renderiza (assinatura, CRC de cada chunk e terminador IEND), além do hash pinado. Os quatro PNGs legados corrompidos (`ziistec-icon.png`, `ziistec-horizontal-light.png`, `ziistec-horizontal-dark.png`, `ziistec-og.png`) saíram do build e da publicação na Fase 3; nenhum foi reparado ou substituído. Estado atual e dívidas conhecidas: `docs/PNG_QUARANTINE.md`.
 - `site/script.js` permanece responsável apenas por menu, reveal, tabs e storytelling existentes; nenhuma animação nova foi adicionada.
 - `prefers-reduced-motion: reduce` permanece preservado.
 
