@@ -173,6 +173,12 @@ const regressions = [
   ['promessa de relatórios avançados', 'check.mjs', /proibida/, (d) => edit(d, 'site/index.html', inBody('<p>Relatórios avançados</p>'))],
   ['motion da Fase 4', 'check.mjs', /Fase 4/, (d) => edit(d, 'site/script.js', (s) => `${s}\nnew IntersectionObserver(()=>{});`)],
   ['CTA WhatsApp sem nova aba', 'check.mjs', /nova aba/, (d) => edit(d, 'site/index.html', (s) => s.replace('target="_blank"', 'target="_self"'))],
+  // invariantes da Homepage V3.1
+  ['"Cena A" exposta ao público', 'check.mjs', /Cena A\/B\/C/, (d) => edit(d, 'site/index.html', (s) => s.replace('Etapas 01–02</span>', 'Etapas 01–02 · Cena A</span>'))],
+  ['orçamento e venda somados em R$ 2.420', 'check.mjs', /somados/, (d) => edit(d, 'site/index.html', inBody('<p>Total R$ 2.420</p>'))],
+  ['rótulo aprovado removido', 'check.mjs', /Rótulo aprovado da V3\.1 ausente/, (d) => edit(d, 'site/index.html', (s) => s.replaceAll('03 · recebida', '03 · atribuída'))],
+  ['valor financeiro no celular do técnico', 'check.mjs', /celular do técnico/, (d) => edit(d, 'site/index.html', (s) => s.replace('<span class="ph-title">Atualização de campo</span>', '<span class="ph-title">Atualização de campo · R$ 420</span>'))],
+  ['etapa do fluxo removida', 'check.mjs', /Etapa 5 do fluxo ausente/, (d) => edit(d, 'site/index.html', (s) => s.replaceAll('data-flow-stage="5"', 'data-flow-stage="x"'))],
   ['suíte de tooling fora do npm run check', 'check.mjs', /suíte de tooling/, (d) => edit(d, 'package.json', (s) => s.replace(' && node --test scripts/tooling.test.mjs', ''))],
 ];
 

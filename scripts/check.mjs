@@ -201,4 +201,37 @@ assertValidPng('ziistec-favicon.png',mark);
 const expectedMarkSha='368d4153166acf6a39280a3766379b31fecd47ed50d07f721ad2d463cd95452a';
 if(sha256(mark)!==expectedMarkSha) throw new Error('Símbolo oficial ZiisTec divergiu do asset aprovado');
 
-console.log(`check ok  Fase 3 (copy, planos, CTA, lockup, fontes, PNG, a11y, sem motion Fase 4) + destinos/formulários/telefone completo, folha única, paridade de classes sem exceção, CSP sem duplicatas, ${textFiles.length} arquivos de texto sem saída de ferramenta`);
+// ---------------------------------------------------------------- invariantes da Homepage V3.1 (Static Fidelity)
+// Regras do handoff congelado: rótulos públicos aprovados, "Cena A/B/C" só interno, financeiro separado,
+// celular do técnico sem valor financeiro, as seis etapas e a estrutura preparada para a fase de motion.
+const v31Labels=['Total do orçamento','03 · recebida','04 · em atendimento','No escritório · proprietário','No campo · técnico','Etapas 01–02','Etapas 03–04','Etapas 05–06'];
+for(const label of v31Labels) if(!html.includes(label)) throw new Error(`Rótulo aprovado da V3.1 ausente: ${label}`);
+if(!/Escritório[\s\S]{0,400}Campo[\s\S]{0,400}Escritório/.test(html)) throw new Error('Sequência Escritório → Campo → Escritório ausente');
+for(const [name,page] of Object.entries(pages)){
+  if(/\bCena\s+[ABC]\b/i.test(page)) throw new Error(`Terminologia interna "Cena A/B/C" publicada em ${name}.html`);
+  if(/2\.420|2420/.test(page)) throw new Error(`Orçamento e venda somados (R$ 2.420) em ${name}.html`);
+}
+for(const stage of ['1','2','3','4','5','6']){
+  if(!new RegExp(`data-flow-stage="${stage}"`).test(html)) throw new Error(`Etapa ${stage} do fluxo ausente (data-flow-stage)`);
+}
+if(!html.includes('data-flow-track')) throw new Error('Trilho do fluxo desktop ausente (data-flow-track)');
+for(const scene of ['office-01-02','field-03-04','office-05-06']) if(!html.includes(`data-flow-scene="${scene}"`)) throw new Error(`Cena estática ausente: ${scene}`);
+// Celular do técnico: todo bloco class="ph" (até fechar o div) não pode conter valor em reais.
+function phoneBlocks(source){
+  const blocks=[];
+  const open=/<div\s+class="ph(?:\s[^"]*)?"[^>]*>/g;
+  let m;
+  while((m=open.exec(source))){
+    let depth=1,i=m.index+m[0].length;
+    const tag=/<(\/?)div\b[^>]*>/g; tag.lastIndex=i;
+    let t;
+    while(depth&&(t=tag.exec(source))) depth+=t[1]?-1:1;
+    blocks.push(source.slice(m.index,t?t.index:source.length));
+  }
+  return blocks;
+}
+const phones=phoneBlocks(html);
+if(phones.length<3) throw new Error('Celulares do técnico ausentes na homepage');
+for(const block of phones) if(/R\$|\d+,\d{2}\b/.test(block)) throw new Error('Valor financeiro da empresa no celular do técnico');
+
+console.log(`check ok  V3.1 (rótulos aprovados, sem Cena A/B/C, financeiro separado, celular sem valores, seis etapas) + Fase 3 (copy, planos, CTA, lockup, fontes, PNG, a11y, sem motion Fase 4) + destinos/formulários/telefone completo, folha única, paridade de classes sem exceção, CSP sem duplicatas, ${textFiles.length} arquivos de texto sem saída de ferramenta`);

@@ -321,7 +321,8 @@
   .mk-menu{display:flex;width:46px;height:46px}
 
   .mk-hero{padding-bottom:40px}
-  .mk-hero-title{line-height:.98}
+  /* Mantém as 3 linhas também perto de 640: o título só encolhe se a linha mais longa não couber. */
+  .mk-hero-title{font-size:min(var(--mkt-hero),calc((100cqw - 2 * var(--mkt-gutter)) / 8.9));line-height:.98}
   .mk-hero-titlebar{margin-top:20px}
   .mk-hero-side{display:block;margin-top:24px}
   .mk-hero-deck{width:600px;max-width:100%;font-size:var(--mkt-lead)}
@@ -330,10 +331,11 @@
   .mk-hero-cta,.mk-hero-cta.mk-btn-secondary{width:auto;padding:16px 22px;font-size:16px}
   .mk-hero-note{margin-top:12px;text-align:left}
 
-  .mk-hero-stage{--k:.70;--pk:calc(var(--k) * .907);height:calc(700px * var(--k) - 54px + 614px * var(--pk));margin-top:44px}
+  .mk-hero-stage{--k:.70;--pk:calc(var(--k) * .907);height:calc(630px * var(--k) + 16px + 614px * var(--pk));margin-top:44px}
   .app-hero{width:800px}
   .hero-win{left:var(--mkt-gutter);box-shadow:0 50px 100px -40px rgba(16,19,20,.55)}
-  .hero-phone{top:calc(700px * var(--k) - 70px);right:var(--mkt-gutter);left:auto;transform-origin:100% 0;transform:scale(var(--pk))}
+  /* O celular apoia só sobre a faixa vazia inferior da janela (70 px de projeto). */
+  .hero-phone{top:calc(630px * var(--k));right:var(--mkt-gutter);left:auto;transform-origin:100% 0;transform:scale(var(--pk))}
   .hero-toast{top:calc(700px * var(--k) + 36px);left:calc(var(--mkt-gutter) - 8px);width:min(420px,calc(100cqw - 104px - 300px * var(--pk)));transform:none}
   .hero-where{top:calc(700px * var(--k) + 176px)}
   /* Visão geral recomposta em 3 + 1 cartões: mesmos dados, nenhum número encolhe. */
@@ -374,6 +376,7 @@
 
   .mk-hero{padding-bottom:40px}
   .mk-hero-kicker{line-height:1.5}
+  .mk-hero-title{font-size:var(--mkt-hero)}
   .br-mo{display:inline}
   .br-3,.br-2{display:none}
   .mk-hero-titlebar{margin-top:18px}
@@ -455,8 +458,8 @@
 .timeline>p i.amber-dot{background:var(--zt-accent-status)}
 .tl-text{font-size:14px;line-height:20px}
 .tl-time{margin-left:auto;padding-left:10px;color:var(--zt-dark-ink-muted);font-family:var(--zt-font-data);font-size:13px;font-weight:500;line-height:20px}
-.fin-figs{display:flex;align-items:flex-end;gap:36px;margin-top:18px}
-.fin-in,.fin-due{display:block;margin-top:8px;font-family:var(--zt-font-display);font-weight:700;line-height:1}
+.fin-figs{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 36px;margin-top:18px}
+.fin-in,.fin-due{display:block;margin-top:8px;font-family:var(--zt-font-display);font-weight:700;line-height:1;white-space:nowrap}
 .fin-in{font-size:44px;letter-spacing:-.03em}
 .fin-due{color:var(--zt-dark-ink-muted);font-size:28px;letter-spacing:-.02em}
 .fin-chart{display:flex;align-items:flex-end;gap:18px;height:180px;margin-top:26px}
@@ -490,7 +493,7 @@
 .orc-card-total{display:flex;align-items:baseline;justify-content:space-between;margin-top:8px;color:var(--zt-dark-ink-muted);font-size:12.5px}
 .orc-card-val{color:var(--zt-dark-ink);font-family:var(--zt-font-display);font-size:20px;font-weight:700;letter-spacing:-.02em;white-space:nowrap}
 .hist-card{width:342px;padding:16px 18px 8px;border:1px solid var(--zt-border);border-radius:12px;background:#fff;color:var(--zt-ink);box-shadow:0 30px 60px -24px rgba(0,0,0,.75)}
-.hc-top{display:flex;align-items:center;justify-content:space-between}
+.hc-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 12px}
 .hc-kick{color:var(--zt-brand-deep)}
 .hc-loc{color:var(--zt-ink-muted);font-size:11px}
 .hc-name{display:block;margin:8px 0 6px;font-family:var(--zt-font-display);font-size:19px;letter-spacing:-.015em}
@@ -611,7 +614,7 @@
   .scene-seg>i{flex:1 1 0;height:3px;border-radius:2px;background:var(--zt-dark-border)}
   .scene-seg>i.is-past{background:rgba(8,215,201,.4)}
   .scene-seg>i.is-now{background:var(--zt-brand)}
-  .scene-head{display:flex;align-items:center;justify-content:space-between;margin-top:24px}
+  .scene-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 12px;margin-top:24px}
   .scene-place{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--zt-dark-border);border-radius:var(--zt-radius-sm);font-family:var(--zt-font-data);font-size:10.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
   .scene-place .ic{color:var(--zt-brand-strong)}
   .scene-range{color:var(--zt-ink-muted);font-family:var(--zt-font-data);font-size:10.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
