@@ -17,46 +17,83 @@
   <link rel="stylesheet" href="/styles.css">
   <script src="/script.js" defer></script>
 </head>
-<body>
+<body class="page-home">
 <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
-<header class="site-header">
-  <div class="container nav-inner">
+<svg class="mk-sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-arrow-r" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+  <symbol id="i-arrow-d" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></symbol>
+  <symbol id="i-money" viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h16"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+  <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+</svg>
+<header class="mk-header">
+  <div class="mk-wrap mk-header-inner">
     <a class="brand-lockup brand-light brand-header" href="#topo" aria-label="ZiisTec — início"><img src="/brand/ziistec-favicon.png" alt=""><span class="brand-word"><b>Ziis</b><b>Tec</b></span></a>
-    <button class="menu-button" type="button" aria-expanded="false" aria-controls="main-nav" aria-label="Abrir menu"><span></span><span></span><span></span></button>
-    <nav class="main-nav" id="main-nav" aria-label="Navegação principal">
-      <a href="#como-funciona">Como funciona</a><a href="#para-quem">Para quem</a><a href="#planos">Planos</a><a href="#duvidas">Dúvidas</a>
-      <a class="button nav-cta" data-cta="header-contact" target="_blank" rel="noopener" href="https://wa.me/5547991797202?text=Ol%C3%A1%21%20Vim%20pelo%20site%20da%20ZiisTec%20e%20quero%20conhecer%20melhor%20a%20plataforma.">Quero conhecer a ZiisTec</a>
+    <nav class="mk-nav" id="mk-nav" aria-label="Navegação principal">
+      <div class="mk-nav-links"><a href="#como-funciona">Como funciona</a><a href="#para-quem">Para quem</a><a href="#planos">Planos</a><a href="#duvidas">Dúvidas</a></div>
+      <a class="mk-btn mk-btn-primary mk-nav-cta" data-cta="header-contact" target="_blank" rel="noopener" href="https://wa.me/5547991797202?text=Ol%C3%A1%21%20Vim%20pelo%20site%20da%20ZiisTec%20e%20quero%20conhecer%20melhor%20a%20plataforma.">Quero conhecer a ZiisTec</a>
     </nav>
+    <button class="mk-menu" type="button" aria-expanded="false" aria-controls="mk-nav" aria-label="Abrir menu"><svg class="ic ic-20 ic-w2" aria-hidden="true"><use href="#i-menu"></use></svg></button>
   </div>
 </header>
 <main id="conteudo">
-<section class="hero" id="topo">
-  <div class="container hero-grid">
-    <div class="hero-copy">
-      <span class="kicker"><span class="desktop-copy">PARA PRESTADORES DE SERVIÇO E EQUIPES DE CAMPO</span><span class="mobile-copy">PARA PRESTADORES DE SERVIÇO</span></span>
-      <h1>Do orçamento ao<br>histórico do cliente,<br>numa operação só.</h1>
-      <p class="hero-lead">Orçamento, execução em campo e financeiro espalhados é onde o atendimento se perde. A ZiisTec liga essas etapas no mesmo serviço<span class="desktop-copy"> — sem recomeçar cadastro e sem depender de mensagem solta</span>.</p>
-      <div class="hero-actions">
-        <a class="button button-primary" data-cta="hero-contact" target="_blank" rel="noopener" href="https://wa.me/5547991797202?text=Ol%C3%A1%21%20Vim%20pelo%20site%20da%20ZiisTec%20e%20quero%20conhecer%20melhor%20a%20plataforma.">Quero conhecer a ZiisTec <span aria-hidden="true">→</span></a>
-        <a class="button button-secondary" data-cta="hero-product" href="#como-funciona">Ver como funciona <span aria-hidden="true">↓</span></a>
-      </div>
-      <p class="cta-note">Contato comercial, sem compromisso.</p>
-      <div class="flow-chips" aria-label="Fluxo completo"><span class="flow-label">FLUXO COMPLETO</span><b>Orçamento</b><i>→</i><b>OS</b><i>→</i><b>Campo</b><i>→</i><b>Financeiro</b><i>→</i><b>Histórico</b></div>
-    </div>
-    <div class="hero-product" aria-label="Recriação sanitizada da visão geral da ZiisTec com dados ilustrativos">
-      <div class="product-shell">
-        <div class="product-top"><span class="mini-mark"><img src="/brand/ziistec-favicon.png" alt=""></span><span>VISÃO GERAL</span><b>OPERAÇÃO DE HOJE</b></div>
-        <div class="metrics"><div><small>OS EM CAMPO</small><strong>07</strong></div><div><small>AGENDA</small><strong>09</strong></div><div><small>ORÇAMENTOS</small><strong>12</strong></div></div>
-        <div class="hero-rows">
-          <article><div><strong>OS #0248 · Instalação de fechadura</strong><small>Condomínio Atlântico · Bloco B · Apto 702</small></div><span class="status amber">EM ATENDIMENTO</span></article>
-          <article class="desktop-only"><div><strong>OS #0251 · Manutenção de CFTV</strong><small>Padaria Vista Mar · Loja 2</small></div><span class="status teal">ATRIBUÍDA</span></article>
-          <article><div><strong>ORC-0221<span class="desktop-copy"> · Controle de acesso</span></strong><small>Aguardando aprovação do cliente</small></div><strong class="money">R$ 3.180</strong></article>
+<section class="mk-hero" id="topo">
+  <div class="mk-wrap">
+    <p class="mk-kicker mk-hero-kicker">Para prestadores de serviço <br class="br-mo">e equipes de campo</p>
+    <div class="mk-hero-titlebar">
+      <h1 class="mk-hero-title">Do orçamento ao<br class="br-3"> histórico<br class="br-2"> do cliente,<br class="br-3"> numa operação só.</h1>
+      <div class="mk-hero-side">
+        <p class="mk-hero-deck">Orçamento, execução em campo e financeiro espalhados é onde o atendimento se perde. A ZiisTec liga essas etapas no mesmo serviço — sem recomeçar cadastro e sem depender de mensagem solta.</p>
+        <div class="mk-hero-act">
+          <div class="mk-hero-ctas">
+            <a class="mk-btn mk-btn-primary mk-hero-cta" data-cta="hero-contact" target="_blank" rel="noopener" href="https://wa.me/5547991797202?text=Ol%C3%A1%21%20Vim%20pelo%20site%20da%20ZiisTec%20e%20quero%20conhecer%20melhor%20a%20plataforma.">Quero conhecer a ZiisTec<svg class="ic ic-18 ic-w2" aria-hidden="true"><use href="#i-arrow-r"></use></svg></a>
+            <a class="mk-btn mk-btn-secondary mk-hero-cta" data-cta="hero-product" href="#como-funciona">Ver como funciona<svg class="ic ic-16 ic-w2" aria-hidden="true"><use href="#i-arrow-d"></use></svg></a>
+          </div>
+          <p class="mk-note mk-hero-note">Contato comercial, sem compromisso.</p>
         </div>
-        <div class="received desktop-only"><span>RECEBIDO NO MÊS</span><strong>R$ 12.860</strong><i class="mini-bars"><b></b><b></b><b></b><b></b><b></b></i></div>
       </div>
-      <div class="approved-toast"><span>✓</span><div><strong>ORC-0218 aprovado · OS #0248 criada</strong><small>sem recadastrar cliente, itens ou valores</small></div></div>
-      <p class="illustrative-note">Recriação sanitizada do módulo real · dados ilustrativos</p>
     </div>
+  </div>
+  <div class="mk-hero-stage" role="img" aria-label="Recriação sanitizada da ZiisTec com dados ilustrativos: a visão geral do proprietário no escritório e a OS #0248 em atendimento no celular do técnico em campo.">
+    <div class="hero-win">
+<div class="app app-hero">
+  <div class="app-bar"><span class="app-crumb"><img class="app-z" src="/brand/ziistec-favicon.png" alt="">Operação › Visão geral</span><span class="app-bar-end"><span class="ui-new app-bar-new"><svg class="ic ic-15 ic-w22" aria-hidden="true"><use href="#i-plus"></use></svg>Novo orçamento</span><span class="ui-av ui-av-28">JV</span></span></div>
+  <div class="app-body">
+    <div class="app-side"><span class="app-mod is-active"><svg class="ic ic-16" aria-hidden="true"><use href="#i-grid"></use></svg><span>Visão geral</span></span><span class="app-mod"><svg class="ic ic-16" aria-hidden="true"><use href="#i-users"></use></svg><span>Clientes</span></span><span class="app-mod"><svg class="ic ic-16" aria-hidden="true"><use href="#i-file"></use></svg><span>Orçamentos</span></span><span class="app-mod"><svg class="ic ic-16" aria-hidden="true"><use href="#i-wrench"></use></svg><span>Ordens de serviço</span></span><span class="app-mod"><svg class="ic ic-16" aria-hidden="true"><use href="#i-cal"></use></svg><span>Agenda</span></span><span class="app-mod"><svg class="ic ic-16" aria-hidden="true"><use href="#i-money"></use></svg><span>Financeiro</span></span><span class="app-mod"><svg class="ic ic-16" aria-hidden="true"><use href="#i-tag"></use></svg><span>Produtos e serviços</span></span></div>
+    <div class="app-main">
+<div class="ov-head"><div><span class="ui-lbl ui-strong">Operação de hoje</span><span class="ov-title">Visão geral</span></div><span class="ui-new ov-new"><svg class="ic ic-15 ic-w22" aria-hidden="true"><use href="#i-plus"></use></svg>Novo orçamento</span></div>
+<div class="ov-kpis"><div class="ov-tile"><span class="ui-lbl">OS em campo</span><span class="ov-num">07</span></div><div class="ov-tile"><span class="ui-lbl">Agenda</span><span class="ov-num">09</span></div><div class="ov-tile"><span class="ui-lbl">Orçamentos</span><span class="ov-num">12</span></div><div class="ov-tile ov-rec"><span class="ui-lbl">Recebido no mês</span><span class="ov-rec-val">R$ 12.860</span><span class="ui-bars"><i></i><i></i><i></i><i></i><i></i></span></div></div>
+<div class="ov-table"><div class="ov-table-head"><span class="ov-table-title">Ordens de serviço</span><span class="ui-lbl">hoje</span></div>
+<div class="ov-row is-hi"><span class="ov-code">OS #0248</span><span class="ov-what"><b>Instalação de fechadura</b><small>Condomínio Atlântico · Bloco B · Apto 702</small></span><span class="ov-who"><span class="ui-av ui-av-24">JM</span><span>João M.</span></span><span class="ov-right"><span class="ui-pill ui-pill-amber">Em atendimento</span></span></div>
+<div class="ov-row"><span class="ov-code">OS #0251</span><span class="ov-what"><b>Manutenção de CFTV</b><small>Padaria Vista Mar · Loja 2</small></span><span class="ov-who"><span class="ui-av ui-av-24">RC</span><span>R. C.</span></span><span class="ov-right"><span class="ui-pill ui-pill-teal">Atribuída</span></span></div>
+<div class="ov-row"><span class="ov-code">ORC-0221</span><span class="ov-what"><b>Controle de acesso</b><small>Aguardando aprovação do cliente</small></span><span class="ov-who"></span><span class="ov-right"><span class="ov-amount">R$ 3.180</span></span></div></div>
+    </div>
+  </div>
+</div>
+    </div>
+    <div class="hero-phone">
+<div class="ph"><div class="ph-screen"><span class="ph-notch"></span>
+<div class="ph-head"><span class="ph-code">OS #0248</span><span class="ui-pill ui-pill-amber ui-pill-sm">Em atendimento</span></div><span class="ph-title">Instalação de fechadura digital</span><span class="ph-addr"><svg class="ic ic-15" aria-hidden="true"><use href="#i-pin"></use></svg><span>Condomínio Atlântico<small>Bloco B · Apto 702</small></span></span><span class="ph-time"><svg class="ic ic-15" aria-hidden="true"><use href="#i-clock"></use></svg>Hoje · 14:00</span><div class="ph-panel"><span class="ui-lbl">Solicitação do cliente</span><p>Trocar fechadura da portaria social e configurar acesso dos moradores do bloco.</p></div><div class="ph-panel ph-items"><span class="ui-lbl">Itens do serviço</span><span><svg class="ic ic-14" aria-hidden="true"><use href="#i-tag"></use></svg>Fechadura digital · 1 un</span><span><svg class="ic ic-14" aria-hidden="true"><use href="#i-tag"></use></svg>Fonte 12V · 1 un</span></div><div class="ph-btns"><span class="ph-btn is-primary">Concluir atendimento</span><span class="ph-btn">Preciso voltar</span></div>
+</div></div>
+    </div>
+    <div class="ui-toast hero-toast"><span class="ui-toast-ic"><svg class="ic ic-18 ic-w24" aria-hidden="true"><use href="#i-check"></use></svg></span><span class="ui-toast-text"><b>ORC-0218 aprovado · OS #0248 criada</b><small>sem recadastrar cliente, itens ou valores</small></span></div>
+    <div class="mk-where hero-where"><span class="mk-where-item"><svg class="ic ic-15" aria-hidden="true"><use href="#i-monitor"></use></svg>No escritório · proprietário</span><span class="mk-where-item"><svg class="ic ic-15" aria-hidden="true"><use href="#i-phone"></use></svg>No campo · técnico</span><span class="mk-disclose">Recriação sanitizada · dados ilustrativos</span></div>
   </div>
 </section>
 

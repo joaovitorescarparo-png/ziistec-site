@@ -1,5 +1,7 @@
-const menuButton=document.querySelector('.menu-button');
-const nav=document.querySelector('.main-nav');
+// Interação mínima da homepage V3.1 (Static Fidelity): só o menu.
+// O FAQ usa <details>/<summary> nativos. Nenhum motion/scroll storytelling aqui.
+const menuButton=document.querySelector('.mk-menu');
+const nav=document.querySelector('.mk-nav');
 
 function closeMenu(){
   if(!menuButton||!nav) return;
@@ -17,5 +19,5 @@ if(menuButton&&nav){
   });
   nav.addEventListener('click',(event)=>{ if(event.target.closest('a')) closeMenu(); });
   document.addEventListener('click',(event)=>{ if(!nav.contains(event.target)&&!menuButton.contains(event.target)) closeMenu(); });
-  document.addEventListener('keydown',(event)=>{ if(event.key==='Escape') closeMenu(); });
+  document.addEventListener('keydown',(event)=>{ if(event.key==='Escape'){ const wasOpen=nav.classList.contains('is-open'); closeMenu(); if(wasOpen) menuButton.focus(); } });
 }
