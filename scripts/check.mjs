@@ -12,6 +12,7 @@ const abs=(path)=>join(root,...path.split('/'));
 const read=(path,encoding='utf8')=>readFile(abs(path),encoding);
 const exists=async(path)=>access(abs(path)).then(()=>true,()=>false);
 const required=[
+  'site/motion-boot.js','site/motion.js','site/v4/03-motion.css','scripts/motion-audit.mjs',
   'site/index.html','site/script.js','site/v4/00-fonts.css','site/v4/01-tokens.css','site/v4/02-home.css',
   'site/privacidade.html','site/termos.html','site/404.html','site/robots.txt','site/sitemap.xml',
   'site/brand/ziistec-favicon.png',...fonts.map((font)=>`site/fonts/${font.file}`),
@@ -243,7 +244,8 @@ if(phones.length<3) throw new Error('Celulares do técnico ausentes na homepage'
 for(const block of phones) if(/R\$|\d+,\d{2}\b/.test(block)) throw new Error('Valor financeiro da empresa no celular do técnico');
 
 // F2.6: approved CSS and markup are immutable, apart from the two external scripts.
-if(sha256(await read('site/v4/01-tokens.css',null))!=='64cab324b37e90685b470db0877ec77acd3a0eee6c27bc64fde49b2f234c4ff7' || sha256(await read('site/v4/02-home.css',null))!=='f6f484abb89df87c072a32a8193d92e0c0c00731e9a6b3e906ab7557958066da') throw new Error('F2 static CSS changed');
+const normalizedHash=source=>sha256(Buffer.from(source.replace(/\r\n/g,'\n')));
+if(normalizedHash(await read('site/v4/01-tokens.css'))!=='61e4a5bdf990eec0adf38acb14253d3e2e59dd59743b5aa98c2b31141e6487b8' || normalizedHash(await read('site/v4/02-home.css'))!=='9ffee1bfe508f2de710c41b4631c09dd8df358842bdfe140b3ee3033df10c159') throw new Error('F2 static CSS changed');
 const staticHtml=html.replace(/^  <script src="\/motion(?:-boot)?\.js"(?: defer)?><\/script>\r?\n/gm,'').replace(/\r\n/g,'\n').trimEnd();
 if(sha256(Buffer.from(staticHtml))!=='d9ec7b683a7499c3f4c2e03e011b753c501acefafa142ec6b47f4a947bdc984f') throw new Error('F2 static frames/markup changed');
 if(sha256(Buffer.from(script.replace(/\r\n/g,'\n')))!=='2f8080e63e564fe60c2161ea598590b3ab49c0508d87d029c03bc4cff851ac8c') throw new Error('F2 static menu script changed');

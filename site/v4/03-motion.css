@@ -33,6 +33,10 @@ html.motion.motion-pending .hero-where { opacity:0; }
 /* Only the tint is a pseudo-element; the approved border and content stay intact. */
 html.motion .hero-win .ov-row[data-motion-tint] { position:relative; isolation:isolate; background:transparent; }
 html.motion .hero-win .ov-row[data-motion-tint]::before { content:""; position:absolute; inset:0; border-radius:inherit; background:var(--zt-dark-surface-200); z-index:-1; }
+/* R4 approved mobile LCP fallback: title is never transparent or clipped. */
+@media (max-width:639px) {
+  html.motion.motion-pending .mk-hero-title { opacity:1; translate:0 16px; }
+}
 @media (prefers-reduced-motion: reduce) {
   .page-home {
     --mo-enter-lg:0ms;
@@ -53,5 +57,5 @@ html.motion .hero-win .ov-row[data-motion-tint]::before { content:""; position:a
   html.motion.motion-pending .hero-win,
   html.motion.motion-pending .hero-phone,
   html.motion.motion-pending .hero-toast,
-  html.motion.motion-pending .hero-where { opacity:1; }
+  html.motion.motion-pending .hero-where { opacity:1; translate:none; }
 }

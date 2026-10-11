@@ -5,6 +5,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
+import vm from 'node:vm';
+import { gzipSync } from 'node:zlib';
 import { verifyFonts } from './font-integrity.mjs';
 import { assertValidPng, inspectPng, sha256 } from './png-integrity.mjs';
 import { extractUrls, findPhones, parseTags } from './html-audit.mjs';
@@ -12,6 +14,63 @@ import { EXCLUDED_DIRS } from './repo-files.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const FAVICON_SHA = '368d4153166acf6a39280a3766379b31fecd47ed50d07f721ad2d463cd95452a';
+
+// Boot failure modes are exercised independently of the main script or a browser.
+async function boot({ reduce = false, scroll = 0, hash = '', navigation = 'navigate' } = {}) {
+  const classes = new Set();
+  let expired, changed, delay;
+  const sandbox = {
+    document: { documentElement: { classList: { add: (...names) => names.forEach(n => classes.add(n)), remove: (...names) => names.forEach(n => classes.delete(n)) } } },
+    matchMedia: () => ({ matches: reduce, addEventListener: (_, fn) => { changed = fn; } }),
+    performance: { getEntriesByType: () => [{ type: navigation }] },
+    location: { hash }, scrollY: scroll, window: {},
+    setTimeout: (fn, ms) => { expired = fn; delay = ms; return 1; }
+  };
+  vm.runInNewContext(await readFile(join(root, 'site/motion-boot.js'), 'utf8'), sandbox);
+  return { classes, expire: () => expired?.(), change: matches => changed({ matches }), delay };
+}
+test('boot: reduced motion never hides first paint', async () => {
+  const state = await boot({ reduce: true });
+  assert.deepEqual([...state.classes], []);
+  assert.equal(state.delay, undefined);
+});
+test('boot: main-script failure restores static at 1500ms', async () => {
+  const state = await boot();
+  assert.deepEqual([...state.classes], ['motion', 'motion-pending']);
+  assert.equal(state.delay, 1500);
+  state.expire();
+  assert.equal(state.classes.size, 0);
+});
+for (const options of [{ scroll: 100 }, { hash: '#planos' }, { navigation: 'back_forward' }]) {
+  test(`boot: direct final state ${JSON.stringify(options)}`, async () => {
+    const state = await boot(options);
+    assert.equal(state.classes.has('motion-pending'), false);
+  });
+}
+test('boot: live reduced-motion switch restores static', async () => {
+  const state = await boot();
+  state.change(true);
+  assert.equal(state.classes.size, 0);
+});
+test('main: watchdog latches startup before the bounded fonts wait', async () => {
+  const cleared = [], waits = [];
+  const sandbox = {
+    document: { documentElement: { classList: { contains: () => true } }, querySelector: () => ({}), fonts: { ready: new Promise(() => {}) } },
+    matchMedia: () => ({ matches: false, addEventListener: () => {} }),
+    window: { ziisMotionBoot: { timer: 17 } }, addEventListener: () => {},
+    clearTimeout: id => cleared.push(id), setTimeout: (_, ms) => { waits.push(ms); return 18; }
+  };
+  vm.runInNewContext(await readFile(join(root, 'site/motion.js'), 'utf8'), sandbox);
+  assert.deepEqual(cleared, [17]);
+  assert.deepEqual(waits, [400]);
+});
+test('motion scripts: syntax and frozen size budgets', async () => {
+  const files = ['motion-boot.js', 'motion.js'];
+  const sources = await Promise.all(files.map(f => readFile(join(root, 'site', f))));
+  assert.ok(sources[0].length < 1024);
+  assert.ok(gzipSync(Buffer.concat(sources)).length <= 8192);
+  for (const file of files) assert.equal(spawnSync(process.execPath, ['--check', join(root, 'site', file)]).status, 0);
+});
 
 function run(script, cwd, scriptRoot = root) {
   return spawnSync(process.execPath, [join(scriptRoot, 'scripts', script)], { cwd, encoding: 'utf8' });
@@ -174,6 +233,7 @@ const regressions = [
   // F2 replaces the old blanket ban, with actual regression mutations.
   ['F2 reduced branch removed', 'check.mjs', /F2 reduced-motion/, (d) => write(d, 'site/motion.js', 'new IntersectionObserver(()=>{});')],
   ['F2 start state outside motion', 'check.mjs', /F2 unscoped/, (d) => write(d, 'site/v4/03-motion.css', '@media(prefers-reduced-motion:reduce){.hero-win{opacity:0}}')],
+  ['F2 JS start state outside motion', 'check.mjs', /F2 unscoped JS/, (d) => write(d, 'site/motion.js', 'matchMedia("(prefers-reduced-motion: reduce)"); el.animate([{opacity:0},{opacity:1}],420);')],
   ['F2 infinite animation', 'check.mjs', /Motion infinito/, (d) => write(d, 'site/v4/03-motion.css', '@media(prefers-reduced-motion:reduce){html.motion .hero-win{animation:spin 1s infinite}}')],
   ['F2 layout transition', 'check.mjs', /F2 layout/, (d) => write(d, 'site/v4/03-motion.css', '@media(prefers-reduced-motion:reduce){html.motion .hero-win{transition:width 1s}}')],
   ['F2 layout keyframe CSS', 'check.mjs', /F2 layout/, (d) => write(d, 'site/v4/03-motion.css', '@media(prefers-reduced-motion:reduce){@keyframes rise{from{top:10px}to{top:0}}}')],

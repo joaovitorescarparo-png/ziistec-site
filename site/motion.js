@@ -96,7 +96,9 @@
       });
     }
     add('.mk-hero-kicker', 0, 320, `0 ${small}`);
-    add('.mk-hero-title', 60, xl, '0 24px', emphasis, { clipPath: 'inset(0 0 100% 0)' });
+    // R4: active mobile CPU-throttled trials exceeded +200ms with the clip reveal.
+    // Frozen fallback: opaque title, translate 16px only; desktop/tablet keep the reveal.
+    add('.mk-hero-title', 60, xl, mobile ? '0 16px' : '0 24px', emphasis, mobile ? { opacity: 1 } : { clipPath: 'inset(0 0 100% 0)' });
     add('.mk-hero-deck', 240, enter, `0 ${rise}`);
     add('.mk-hero-cta', 310, enter, `0 ${rise}`);
     add('.mk-hero-note', 450, 320);
@@ -124,6 +126,8 @@
     clearTimeout(window.ziisMotionBoot?.timer);
     scheduleQuiet();
   }
+  // Initialization has started; the remaining fonts wait is bounded at 400ms and caught.
+  clearTimeout(window.ziisMotionBoot?.timer);
   startHero().catch(error => {
     settle();
     clearQuiet();

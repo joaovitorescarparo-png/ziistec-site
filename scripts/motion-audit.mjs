@@ -39,6 +39,7 @@ export function auditMotion(files) {
       if (/\bpreventDefault\s*\(/.test(source)) throw new Error(`F2 touch/wheel hijacking: ${name}`);
       if (/(?:^|[,{])\s*['"]?(?:width|height|top|left|margin(?:Top|Left|Right|Bottom)?|boxShadow|filter)['"]?\s*:/.test(source)) throw new Error(`F2 layout keyframe: ${name}`);
       if (/\.style\b|setAttribute\s*\(\s*['"]style/.test(source)) throw new Error(`F2 inline style injection: ${name}`);
+      if (/\.animate\s*\(/.test(source) && !/classList\.contains\(\s*['"]motion['"]\s*\)/.test(source)) throw new Error(`F2 unscoped JS start state: ${name}`);
     }
   }
 }
