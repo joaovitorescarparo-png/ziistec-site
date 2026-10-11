@@ -19,6 +19,20 @@
   --mo-pin-min-h:600px;
   --mo-reveal-at:85%;
 }
+/* Hidden first-paint states exist only during the boot's bounded pending phase.
+   The main script measures final boxes synchronously, then uses finite WAAPI effects. */
+html.motion.motion-pending .mk-hero-kicker,
+html.motion.motion-pending .mk-hero-title,
+html.motion.motion-pending .mk-hero-deck,
+html.motion.motion-pending .mk-hero-cta,
+html.motion.motion-pending .mk-hero-note,
+html.motion.motion-pending .hero-win,
+html.motion.motion-pending .hero-phone,
+html.motion.motion-pending .hero-toast,
+html.motion.motion-pending .hero-where { opacity:0; }
+/* Only the tint is a pseudo-element; the approved border and content stay intact. */
+html.motion .hero-win .ov-row[data-motion-tint] { position:relative; isolation:isolate; background:transparent; }
+html.motion .hero-win .ov-row[data-motion-tint]::before { content:""; position:absolute; inset:0; border-radius:inherit; background:var(--zt-dark-surface-200); z-index:-1; }
 @media (prefers-reduced-motion: reduce) {
   .page-home {
     --mo-enter-lg:0ms;
@@ -31,4 +45,13 @@
     --mo-depth-in:1;
     --mo-arc-lift:0px;
   }
+  html.motion.motion-pending .mk-hero-kicker,
+  html.motion.motion-pending .mk-hero-title,
+  html.motion.motion-pending .mk-hero-deck,
+  html.motion.motion-pending .mk-hero-cta,
+  html.motion.motion-pending .mk-hero-note,
+  html.motion.motion-pending .hero-win,
+  html.motion.motion-pending .hero-phone,
+  html.motion.motion-pending .hero-toast,
+  html.motion.motion-pending .hero-where { opacity:1; }
 }
