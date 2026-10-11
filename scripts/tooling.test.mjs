@@ -171,7 +171,17 @@ const regressions = [
   // gates da Fase 3
   ['copy aprovada removida', 'check.mjs', /Copy aprovada ausente/, (d) => edit(d, 'site/index.html', (s) => s.replaceAll('R$ 79,90', 'R$ 89,90'))],
   ['promessa de relatórios avançados', 'check.mjs', /proibida/, (d) => edit(d, 'site/index.html', inBody('<p>Relatórios avançados</p>'))],
-  ['motion da Fase 4', 'check.mjs', /Fase 4/, (d) => edit(d, 'site/script.js', (s) => `${s}\nnew IntersectionObserver(()=>{});`)],
+  // F2 replaces the old blanket ban, with actual regression mutations.
+  ['F2 reduced branch removed', 'check.mjs', /F2 reduced-motion/, (d) => write(d, 'site/motion.js', 'new IntersectionObserver(()=>{});')],
+  ['F2 start state outside motion', 'check.mjs', /F2 unscoped/, (d) => write(d, 'site/v4/03-motion.css', '@media(prefers-reduced-motion:reduce){.hero-win{opacity:0}}')],
+  ['F2 infinite animation', 'check.mjs', /Motion infinito/, (d) => write(d, 'site/v4/03-motion.css', '@media(prefers-reduced-motion:reduce){html.motion .hero-win{animation:spin 1s infinite}}')],
+  ['F2 layout transition', 'check.mjs', /F2 layout/, (d) => write(d, 'site/v4/03-motion.css', '@media(prefers-reduced-motion:reduce){html.motion .hero-win{transition:width 1s}}')],
+  ['F2 layout keyframe CSS', 'check.mjs', /F2 layout/, (d) => write(d, 'site/v4/03-motion.css', '@media(prefers-reduced-motion:reduce){@keyframes rise{from{top:10px}to{top:0}}}')],
+  ['F2 layout keyframe JS', 'check.mjs', /F2 layout/, (d) => write(d, 'site/motion.js', 'matchMedia("(prefers-reduced-motion: reduce)"); el.animate([{height:"0px"},{height:"10px"}],420);')],
+  ['F2 touch hijacking', 'check.mjs', /F2 touch\/wheel/, (d) => write(d, 'site/motion.js', 'matchMedia("(prefers-reduced-motion: reduce)"); document.addEventListener("touchmove",e=>e.preventDefault());')],
+  ['F2 wheel hijacking', 'check.mjs', /F2 touch\/wheel/, (d) => write(d, 'site/motion.js', 'matchMedia("(prefers-reduced-motion: reduce)"); document.addEventListener("wheel",e=>e.preventDefault());')],
+  ['F2 static frame geometry', 'check.mjs', /F2 static CSS/, (d) => edit(d, 'site/v4/02-home.css', (s) => s+'\n.flow-frame{padding:1px}\n')],
+  ['F2 static frame data', 'check.mjs', /F2 static frames/, (d) => edit(d, 'site/index.html', (s) => s.replace('Bloco B · Apto 702','Bloco C · Apto 702'))],
   ['CTA WhatsApp sem nova aba', 'check.mjs', /nova aba/, (d) => edit(d, 'site/index.html', (s) => s.replace('target="_blank"', 'target="_self"'))],
   // invariantes da Homepage V3.1
   ['"Cena A" exposta ao público', 'check.mjs', /Cena A\/B\/C/, (d) => edit(d, 'site/index.html', (s) => s.replace('Etapas 01–02</span>', 'Etapas 01–02 · Cena A</span>'))],

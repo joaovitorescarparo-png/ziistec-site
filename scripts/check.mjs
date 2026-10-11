@@ -5,6 +5,7 @@ import { verifyFonts, fonts } from './font-integrity.mjs';
 import { assertValidPng, sha256 } from './png-integrity.mjs';
 import { classNames, extractUrls, findPhones, hasTag, isExternalUrl, parseTags } from './html-audit.mjs';
 import { hasToolError, listTextFiles } from './repo-files.mjs';
+import { auditMotion } from './motion-audit.mjs';
 
 const root=fileURLToPath(new URL('..',import.meta.url));
 const abs=(path)=>join(root,...path.split('/'));
@@ -22,7 +23,10 @@ for(const path of required) await read(path,path.endsWith('.png')?null:'utf8');
 
 const html=await read('site/index.html');
 const script=await read('site/script.js');
-const css=(await Promise.all(['00-fonts.css','01-tokens.css','02-home.css'].map((file)=>read(`site/v4/${file}`)))).join('\n');
+const motionPaths=['site/motion-boot.js','site/motion.js','site/v4/03-motion.css'];
+const motionFiles={};
+for(const path of motionPaths) if(await exists(path)) motionFiles[path]=await read(path);
+const css=(await Promise.all(['00-fonts.css','01-tokens.css','02-home.css'].map((file)=>read(`site/v4/${file}`)))).join('\n')+'\n'+(motionFiles['site/v4/03-motion.css']||'');
 const pkg=JSON.parse(await read('package.json'));
 const lock=JSON.parse(await read('package-lock.json'));
 const vercel=JSON.parse(await read('vercel.json'));
@@ -112,7 +116,8 @@ if((html.match(/<details/g)||[]).length!==6) throw new Error('FAQ precisa ter ex
 if((html.match(/<summary/g)||[]).length!==6) throw new Error('FAQ precisa ter exatamente 6 summaries');
 if(!html.includes('class="brand-lockup')||!html.includes('<span class="brand-word"><b>Ziis</b><b>Tec</b></span>')) throw new Error('Lockup Refinement A não está composto por símbolo + wordmark tipográfico');
 if(!html.includes('/brand/ziistec-favicon.png')) throw new Error('Símbolo oficial Z não está referenciado');
-if(/data-scroll-story|requestAnimationFrame\(|IntersectionObserver\(/.test(`${html}\n${script}`)) throw new Error('Motion/scroll storytelling da Fase 4 não pode ser implementado na Fase 3');
+// F2 replaces the Phase 4 ban; all static/business/security gates below remain.
+auditMotion(motionFiles);
 if(script.includes('.style')) throw new Error('JS não deve injetar inline styles sob CSP');
 if(!html.includes('skip-link')||!css.includes(':focus-visible')) throw new Error('Acessibilidade de teclado ausente');
 
@@ -237,4 +242,9 @@ const phones=phoneBlocks(html);
 if(phones.length<3) throw new Error('Celulares do técnico ausentes na homepage');
 for(const block of phones) if(/R\$|\d+,\d{2}\b/.test(block)) throw new Error('Valor financeiro da empresa no celular do técnico');
 
-console.log(`check ok  V3.1 (rótulos aprovados, sem Cena A/B/C, financeiro separado, celular sem valores, seis etapas) + Fase 3 (copy, planos, CTA, lockup, fontes, PNG, a11y, sem motion Fase 4) + destinos/formulários/telefone completo, folha única, paridade de classes sem exceção, CSP sem duplicatas, ${textFiles.length} arquivos de texto sem saída de ferramenta`);
+// F2.6: approved CSS and markup are immutable, apart from the two external scripts.
+if(sha256(await read('site/v4/01-tokens.css',null))!=='64cab324b37e90685b470db0877ec77acd3a0eee6c27bc64fde49b2f234c4ff7' || sha256(await read('site/v4/02-home.css',null))!=='f6f484abb89df87c072a32a8193d92e0c0c00731e9a6b3e906ab7557958066da') throw new Error('F2 static CSS changed');
+const staticHtml=html.replace(/^  <script src="\/motion(?:-boot)?\.js"(?: defer)?><\/script>\r?\n/gm,'').replace(/\r\n/g,'\n').trimEnd();
+if(sha256(Buffer.from(staticHtml))!=='d9ec7b683a7499c3f4c2e03e011b753c501acefafa142ec6b47f4a947bdc984f') throw new Error('F2 static frames/markup changed');
+if(sha256(Buffer.from(script.replace(/\r\n/g,'\n')))!=='2f8080e63e564fe60c2161ea598590b3ab49c0508d87d029c03bc4cff851ac8c') throw new Error('F2 static menu script changed');
+console.log(`check ok  F2 + V3.1/V3.1.2 + copy, planos, CTA, lockup, fontes, PNG, a11y + destinos/formulários/telefone completo, folha única, paridade de classes sem exceção, CSP sem duplicatas, ${textFiles.length} arquivos de texto sem saída de ferramenta`);

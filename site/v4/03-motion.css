@@ -1,0 +1,34 @@
+/* V3.2 local vocabulary. --mo-pin-query is documentation, never var() in @media.
+   R2: (hover: hover) and (pointer: fine) and (min-width: 1024px) and (min-height: 600px).
+   Future F1 is pin-only; the static composition is never changed here. */
+.page-home {
+  --mo-enter-lg:520ms;
+  --mo-enter-xl:640ms;
+  --mo-chart:600ms;
+  --mo-hero-total:1900ms;
+  --mo-ease-emphasis:cubic-bezier(0.16,1,0.3,1);
+  --mo-ease-travel:cubic-bezier(0.65,0,0.35,1);
+  --mo-rise-sm:8px;
+  --mo-rise-xl:48px;
+  --mo-depth-back:0.88;
+  --mo-depth-in:0.92;
+  --mo-arc-lift:-24px;
+  --mo-pin-stage:100svh;
+  --mo-pin-scroll:600svh;
+  --mo-pin-track:700svh;
+  --mo-pin-min-h:600px;
+  --mo-reveal-at:85%;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-home {
+    --mo-enter-lg:0ms;
+    --mo-enter-xl:0ms;
+    --mo-chart:0ms;
+    --mo-hero-total:0ms;
+    --mo-rise-sm:0px;
+    --mo-rise-xl:0px;
+    --mo-depth-back:1;
+    --mo-depth-in:1;
+    --mo-arc-lift:0px;
+  }
+}

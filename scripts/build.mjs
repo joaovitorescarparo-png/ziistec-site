@@ -7,7 +7,7 @@ import { hasToolError, listTextFiles } from './repo-files.mjs';
 const root=join(dirname(fileURLToPath(import.meta.url)),'..');
 const site=join(root,'site'), dist=join(root,'dist');
 await rm(dist,{recursive:true,force:true}); await mkdir(dist,{recursive:true}); await cp(site,dist,{recursive:true});
-const cssFiles=['00-fonts.css','01-tokens.css','02-home.css'];
+const cssFiles=['00-fonts.css','01-tokens.css','02-home.css','03-motion.css'];
 const css=(await Promise.all(cssFiles.map(f=>readFile(join(site,'v4',f),'utf8')))).join('\n');
 await writeFile(join(dist,'styles.css'),css);
 for(const f of await verifyFonts(join(site,'fonts'))) console.log(`font ok  ${f.file}  ${f.bytes} bytes  ${f.family} ${f.weight}`);
