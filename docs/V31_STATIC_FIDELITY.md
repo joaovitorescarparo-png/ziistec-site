@@ -67,3 +67,22 @@ nenhum “Cena A/B/C” publicado; nenhum R$ 2.420; nenhum valor em reais dentro
 - Textos de apoio das seções usam `--mkt-lead` (20 px em ≥ 1280); a prancha usava 19–22 px.
 - Dúvidas: as 6 perguntas continuam `<details>` nativos (gate da Fase 3), com +/− por CSS.
 - Rodapé usa “Privacidade” e “Termos”, como a prancha.
+
+## V3.1.1 — Responsive Workflow Fix (etapas 05–06, abaixo de 1024)
+
+Causa: o cartão “Histórico do cliente” era preso por `position:absolute; bottom:0` dentro de `.scene-device-c`, com
+reserva fixa de 236 px (mobile) / 210 px (tablet), menor que a altura do cartão (274–292 px). O resumo da OS #0248
+flui do topo de uma janela de altura fixa (540 px / 560 × `--kt`). Quando o conteúdo cresce (360) ou a janela é
+reduzida (640–1023), o resumo chega à zona do cartão e R$ 2.000 / R$ 420 ficavam cobertos.
+
+Regra (px de projeto; no tablet multiplicados por `--kt`):
+
+- Janela do Financeiro = conteúdo + faixa de pouso de 64 px abaixo do resumo. Mobile: altura automática,
+  `padding-bottom:64px` em `.app-main`. Tablet: altura de projeto 582 px (518 + 64).
+- Cartão no fluxo, logo após a janela, com `margin-top:-48px` (tablet `-48px × --kt`) e `position:relative` para
+  ficar acima da janela. Folga mínima 64 − 48 = 16 px. Crescimento do cartão vai para baixo.
+- Reservas fixas de 236/210 px removidas. Largura e posição horizontal do cartão inalteradas.
+- Abaixo de 346 px, “Escritório → Campo → Escritório” quebra em duas linhas (8 px entre elas).
+- Rótulo e valor do resumo têm 12 px mínimos entre si (só muda algo em 320–340 px).
+
+Desktop (≥ 1024) sem nenhuma mudança.

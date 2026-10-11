@@ -639,8 +639,15 @@
   .scene-cap{font-family:var(--zt-font-data);font-size:12px;font-weight:500}
   .scene-cap-03{color:var(--zt-brand-strong)}
   .scene-cap-04{color:var(--zt-accent-status)}
-  .scene-device-c{padding-bottom:210px}
-  .scene-device-c .hist-card{position:absolute;right:-12px;bottom:0}
+  /* V3.1.1 — Etapas 05–06: a janela do Financeiro tem altura de conteúdo + faixa de pouso de 64 px de projeto
+     abaixo do resumo da OS #0248 (tablet: 518 + 64 = 582 px de projeto, na mesma escala --kt). O cartão
+     Histórico do cliente fica no fluxo logo depois da janela e sobe 48 px de projeto sobre ela:
+     folga mínima de 64 − 48 = 16 px de projeto. Se o cartão crescer, cresce para baixo. */
+  .scene-win-fin{height:calc(582px * var(--kt))}
+  .scene-win-fin .app-scene{height:582px}
+  .scene-device-c .hist-card{position:relative;margin:calc(-48px * var(--kt)) -12px 0 auto}
+  /* Rótulo e valor do resumo nunca se encostam em telas estreitas (320–340 px): o rótulo quebra linha. */
+  .scene-device-c .fin-line{gap:12px}
 }
 @supports (width:calc(1px * tan(atan2(1px,1px)))){
   @media (max-width:1023px){
@@ -684,12 +691,18 @@
   .scene-cap{position:absolute;font-size:11px}
   .scene-cap-03{top:478px;left:18px;color:var(--zt-dark-ink-muted)}
   .scene-cap-04{top:24px;right:20px}
-  .scene-device-c{padding-bottom:236px}
-  .scene-win-fin{height:540px}
-  .scene-device-c .hist-card{right:auto;left:24px;width:min(342px,calc(100% - 48px))}
+  /* V3.1.1 — mobile: altura pelo conteúdo + 64 px de faixa de pouso; cartão sobe 48 px; folga 16 px. */
+  .scene-win-fin{height:auto}
+  .scene-win-fin .app-scene{height:auto}
+  .scene-win-fin .app-main{padding-bottom:64px}
+  .scene-device-c .hist-card{width:min(342px,calc(100% - 48px));margin:-48px 0 0 24px}
 }
 @media (max-width:389px){
   .flow-scenes{--km:.82}
+}
+/* V3.1.1 — abaixo de 346 px a linha Escritório → Campo → Escritório quebra em duas linhas (8 px entre elas). */
+@media (max-width:345px){
+  .flow-route{flex-wrap:wrap;row-gap:8px}
 }
 @supports (width:calc(1px * tan(atan2(1px,1px)))){
   @media (max-width:639px){
