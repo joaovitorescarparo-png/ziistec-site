@@ -86,3 +86,10 @@ Regra (px de projeto; no tablet multiplicados por `--kt`):
 - Rótulo e valor do resumo têm 12 px mínimos entre si (só muda algo em 320–340 px).
 
 Desktop (≥ 1024) sem nenhuma mudança.
+
+## V3.1.2 — Valores monetários indivisíveis (etapas 05–06, abaixo de 1024)
+
+Entre 320 e ~335 px, “R$ 420” quebrava entre a moeda e o número. Regra: o valor monetário do resumo da OS #0248 é
+uma unidade indivisível — `.scene-device-c .fin-line .ui-val{white-space:nowrap}`, só no elemento do valor. O rótulo
+continua podendo quebrar; os 12 px entre rótulo e valor, a fonte, a escala e o cartão não mudam. Desktop sem mudança.
+`npm run check` reprova se o valor sair de `.ui-val` ou se a regra for removida.

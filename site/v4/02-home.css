@@ -648,6 +648,8 @@
   .scene-device-c .hist-card{position:relative;margin:calc(-48px * var(--kt)) -12px 0 auto}
   /* Rótulo e valor do resumo nunca se encostam em telas estreitas (320–340 px): o rótulo quebra linha. */
   .scene-device-c .fin-line{gap:12px}
+  /* V3.1.2 — o valor monetário é uma unidade indivisível: “R$” e o número nunca se separam. */
+  .scene-device-c .fin-line .ui-val{white-space:nowrap}
 }
 @supports (width:calc(1px * tan(atan2(1px,1px)))){
   @media (max-width:1023px){

@@ -178,6 +178,8 @@ const regressions = [
   ['orçamento e venda somados em R$ 2.420', 'check.mjs', /somados/, (d) => edit(d, 'site/index.html', inBody('<p>Total R$ 2.420</p>'))],
   ['rótulo aprovado removido', 'check.mjs', /Rótulo aprovado da V3\.1 ausente/, (d) => edit(d, 'site/index.html', (s) => s.replaceAll('03 · recebida', '03 · atribuída'))],
   ['valor financeiro no celular do técnico', 'check.mjs', /celular do técnico/, (d) => edit(d, 'site/index.html', (s) => s.replace('<span class="ph-title">Atualização de campo</span>', '<span class="ph-title">Atualização de campo · R$ 420</span>'))],
+  ['valor do resumo financeiro fora de .ui-val', 'check.mjs', /fora de \.ui-val/, (d) => edit(d, 'site/index.html', (s) => s.replaceAll('<span class="fin-line"><span>Venda registrada no atendimento</span><span class="ui-val">', '<span class="fin-line"><span>Venda registrada no atendimento</span><span>'))],
+  ['valor do resumo financeiro pode quebrar', 'check.mjs', /pode quebrar entre R\$ e o número/, (d) => edit(d, 'site/v4/02-home.css', (s) => s.replace('.scene-device-c .fin-line .ui-val{white-space:nowrap}', ''))],
   ['etapa do fluxo removida', 'check.mjs', /Etapa 5 do fluxo ausente/, (d) => edit(d, 'site/index.html', (s) => s.replaceAll('data-flow-stage="5"', 'data-flow-stage="x"'))],
   ['suíte de tooling fora do npm run check', 'check.mjs', /suíte de tooling/, (d) => edit(d, 'package.json', (s) => s.replace(' && node --test scripts/tooling.test.mjs', ''))],
 ];

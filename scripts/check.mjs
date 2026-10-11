@@ -216,6 +216,9 @@ for(const stage of ['1','2','3','4','5','6']){
 }
 if(!html.includes('data-flow-track')) throw new Error('Trilho do fluxo desktop ausente (data-flow-track)');
 for(const scene of ['office-01-02','field-03-04','office-05-06']) if(!html.includes(`data-flow-scene="${scene}"`)) throw new Error(`Cena estática ausente: ${scene}`);
+// V3.1.2 — no resumo financeiro da OS #0248, cada valor fica em .ui-val e não quebra entre “R$” e o número.
+for(const [line] of html.matchAll(/<span class="fin-line">[\s\S]*?<\/span><\/span>/g)) if(!/<span class="ui-val">R\$ [\d.]+(?:,\d{2})?<\/span><\/span>$/.test(line)) throw new Error('Valor do resumo financeiro fora de .ui-val');
+if(!/\.scene-device-c \.fin-line \.ui-val\{white-space:nowrap\}/.test(css)) throw new Error('Valor do resumo financeiro pode quebrar entre R$ e o número (white-space:nowrap ausente)');
 // Celular do técnico: todo bloco class="ph" (até fechar o div) não pode conter valor em reais.
 function phoneBlocks(source){
   const blocks=[];
