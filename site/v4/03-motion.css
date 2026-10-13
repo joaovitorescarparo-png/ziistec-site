@@ -56,6 +56,7 @@ html.motion .hero-win .ov-row[data-motion-tint]::before { content:""; position:a
   html.motion .flow-frame .rail-p4 .rail-fill { scale:.6 1; }
   html.motion .flow-frame .rail-p5 .rail-fill { scale:.8 1; }
   html.motion .flow-frame .rail-p6 .rail-fill { scale:1 1; }
+  html.motion .flow-frame .fd-win { transform-origin:0 0; }
   html.motion .flow-frame .app-side { position:relative; }
   /* Overlay: during T12/T23 the incoming frame lies on the outgoing one; its identical chrome is not drawn twice. */
   html.motion .flow-frame.mo-over .app { background:none; border-color:transparent; }
@@ -70,6 +71,7 @@ html.motion .hero-win .ov-row[data-motion-tint]::before { content:""; position:a
   html.motion .mo-ghost > * { visibility:hidden !important; }
   html.motion .mo-carrier { position:absolute; z-index:5; margin:0; transform-origin:0 0; pointer-events:none; }
   html.motion .mo-carrier.scr-head { gap:12px; }
+  html.motion .mo-carrier.ph-head { width:254px; }
 }
 /* Stage composition inside the 100svh pin. */
 @media (hover: hover) and (pointer: fine) and (min-width: 1280px) and (min-height: 900px) and (prefers-reduced-motion: no-preference) {

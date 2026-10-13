@@ -136,7 +136,7 @@
   });
 })();
 (() => {
-  // M06–M09: pinned workflow, copy, rail and T12 (M10 adds T23). Scroll is native; one rAF per scroll maps scrollY to p (0 → 6 over
+  // M06–M10: pinned workflow. Scroll is native; one rAF per scroll maps scrollY to p (0 → 6 over
   // 600svh) and seeks paused, finite WAAPI effects. Every effect ends on the approved static frame.
   const root = document.documentElement;
   const track = window.IntersectionObserver && document.querySelector('[data-flow-track]');
@@ -146,13 +146,23 @@
   const pinQuery = matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px) and (min-height: 600px)');
   const P0 = -0.5, P1 = 6, SPAN = P1 - P0;
   // [start, end, overlay] in stage heights; overlay = the incoming frame lies over the outgoing one.
-  const T = [[0.5, 1.2, 1], [1.55, 2.5, 0], [2.85, 3.45, 0], [3.8, 4.75, 0], [5.05, 5.65, 0]];
+  const T = [[0.5, 1.2, 1], [1.55, 2.5, 1], [2.85, 3.45, 0], [3.8, 4.75, 0], [5.05, 5.65, 0]];
   const mid = t => t[0] + (t[1] - t[0]) / 2;
   const DWELL = [0.25, 1.375, 2.675, 3.625, 4.9, 5.825];
   const E = {
     standard: 'cubic-bezier(0.2,0,0,1)', emphasis: 'cubic-bezier(0.16,1,0.3,1)',
     travel: 'cubic-bezier(0.65,0,0.35,1)', exit: 'cubic-bezier(0.4,0,1,1)', linear: 'linear'
   };
+  const bez = (x1, y1, x2, y2) => t => {
+    let lo = 0, hi = 1, u = t;
+    for (let i = 0; i < 24; i++) {
+      const x = 3 * x1 * u * (1 - u) ** 2 + 3 * x2 * u * u * (1 - u) + u ** 3;
+      if (x < t) lo = u; else hi = u;
+      u = (lo + hi) / 2;
+    }
+    return 3 * y1 * u * (1 - u) ** 2 + 3 * y2 * u * u * (1 - u) + u ** 3;
+  };
+  const travel = bez(0.65, 0, 0.35, 1);
   const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
   let segs, anims = [], extras = [], swaps = [], applied = NaN, built = false, frame = 0, lastP = 0, lastT = 0, fast = false, fastTimer = 0, shown = [-1, -1];
 
@@ -292,6 +302,44 @@
     enter(q(1, '.fd-toast'), at(0, 0.7), at(0, 1), -24, 0);
     chrome(0);
 
+    // M10 · T23: window recedes, agenda takes over, OS #0248 drops into its slot, phone enters,
+    // the "OS #0248 · Atribuída" chip travels to the phone, the phone fills. No value enters the phone.
+    leave(q(1, '.fd-toast'), at(1, 0), at(1, 0.15), -16, 0);
+    [...qa(1, '.app-main > .scr-head, .app-main > .scr-sub'), ...qa(1, '.os-field')].forEach((el, i) => leave(el, at(1, 0.02 * i), at(1, 0.08 + 0.02 * i), 0, -8));
+    const title = q(1, '.scr-title'), slot = q(2, '.ag-slot.is-focus'), slotName = slot.querySelector('.ag-what b');
+    step(title, at(1, 0), '1', '0');
+    // Source measured in the scale-1 window, target in the receded window (0.88): both are local.
+    const w2 = q(2, '.fd-win'), a23 = local(box(title), w2, box(w2).width / w2.offsetWidth / 0.88), b23 = local(box(slotName), w2);
+    const c23 = carrier(title, w2, [[at(1, 0), a23, a23.h], [at(1, 0.3), b23, b23.h]]);
+    step(c23, P0, '0', '0');
+    step(c23, at(1, 0), '0', '1');
+    seg(c23, 'opacity', at(1, 0.3), at(1, 0.36), '1', '0');
+    // Both windows recede together: bottom 1 → 0.88, top (already .fd-win-back) 1/0.88 → 1.
+    seg(q(1, '.fd-win'), 'scale', at(1, 0.2), at(1, 0.55), '1', '0.88', E.travel);
+    seg(q(2, '.fd-win'), 'scale', at(1, 0.2), at(1, 0.55), `${1 / 0.88}`, '1', E.travel);
+    for (const s of ['.app-main > .scr-head', '.ag-title']) enter(q(2, s), at(1, 0.15), at(1, 0.4), 0, 8);
+    qa(2, '.ag-slot.is-faded').forEach((el, i) => enter(el, at(1, 0.15 + 0.04 * i), at(1, 0.36 + 0.04 * i)));
+    enter(slot, at(1, 0.26), at(1, 0.32));
+    const phone = q(2, '.fd-phone');
+    seg(phone, 'opacity', at(1, 0.3), at(1, 0.85), '0', '1', E.emphasis);
+    seg(phone, 'translate', at(1, 0.3), at(1, 0.85), '120px 40px', '0px 0px', E.emphasis);
+    seg(phone, 'scale', at(1, 0.3), at(1, 0.85), '0.92', '1', E.emphasis);
+    const phHead = q(2, '.ph-head');
+    enter(phHead, at(1, 0.78), at(1, 0.86));
+    qa(2, '.ph-screen > :not(.ph-notch):not(.ph-head)').forEach((el, i) => enter(el, at(1, 0.8 + 0.03 * i), at(1, 0.85 + 0.03 * i), 0, 8));
+    // The chip starts on the 14:00 slot's pill, where the window is at t = 0.40, and lands on the phone head.
+    const pillBox = box(slot.querySelector('.ui-pill')), win = box(w2);
+    const sAt = 1 / 0.88 + (1 - 1 / 0.88) * travel(clamp((0.4 - 0.2) / 0.35));
+    const slotPill = { x: win.x + (pillBox.x - win.x) * sAt, y: win.y + (pillBox.y - win.y) * sAt, h: pillBox.height * sAt };
+    const head2 = local(box(phHead), dev[2]), chipPill = local(box(phHead.querySelector('.ui-pill')), dev[2]), sp = local(slotPill, dev[2]);
+    const r0 = sp.h / chipPill.h;
+    const from = { x: sp.x - (chipPill.x - head2.x) * r0, y: sp.y - (chipPill.y - head2.y) * r0 };
+    const over = { x: (from.x + head2.x) / 2, y: (from.y + head2.y) / 2 - 24 };
+    const chip = carrier(phHead, dev[2], [[at(1, 0.4), from, head2.h * r0], [at(1, 0.6), over, head2.h * (r0 + 1) / 2, 'cubic-bezier(0.3,0,0.7,0.6)'], [at(1, 0.8), head2, head2.h, 'cubic-bezier(0.3,0.4,0.35,1)']], 'ph-head');
+    step(chip, P0, '0', '0');
+    seg(chip, 'opacity', at(1, 0.4), at(1, 0.44), '0', '1');
+    seg(chip, 'opacity', at(1, 0.8), at(1, 0.86), '1', '0');
+    chrome(1);
     compile();
     built = true;
     shown = [-1, -1];
