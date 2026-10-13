@@ -243,6 +243,15 @@ const phones=phoneBlocks(html);
 if(phones.length<3) throw new Error('Celulares do técnico ausentes na homepage');
 for(const block of phones) if(/R\$|\d+,\d{2}\b/.test(block)) throw new Error('Valor financeiro da empresa no celular do técnico');
 
+// M06: the pin exists only under R2 + the safety floor, and the frozen runway math holds.
+const motionCss=(motionFiles['site/v4/03-motion.css']||'').replace(/\s+/g,' '),motionJs=motionFiles['site/motion.js']||'';
+const pinQuery='(hover: hover) and (pointer: fine) and (min-width: 1024px) and (min-height: 600px)';
+if(/position:\s?sticky/.test(motionCss)){
+  for(const [token,value] of [['--mo-pin-stage','100svh'],['--mo-pin-scroll','600svh'],['--mo-pin-track','700svh']]) if(!motionCss.includes(`${token}:${value}`)) throw new Error(`M06 pin: ${token} precisa ser ${value}`);
+  const pinRule=motionCss.match(/@media ([^{]*)\{ html\.motion \.flow-track \{[^}]*\}/);
+  if(!pinRule||!pinRule[1].includes(pinQuery)||!pinRule[1].includes('(prefers-reduced-motion: no-preference)')||!pinRule[0].includes('var(--mo-pin-track)')) throw new Error('M06 pin: layout fora de R2/safety floor ou sem track de 700svh');
+  if(!motionJs.includes(`matchMedia('${pinQuery}')`)) throw new Error('M06 pin: elegibilidade JS diverge de R2');
+}
 // F2.6: approved CSS and markup are immutable, apart from the two external scripts.
 const normalizedHash=source=>sha256(Buffer.from(source.replace(/\r\n/g,'\n')));
 if(normalizedHash(await read('site/v4/01-tokens.css'))!=='61e4a5bdf990eec0adf38acb14253d3e2e59dd59743b5aa98c2b31141e6487b8' || normalizedHash(await read('site/v4/02-home.css'))!=='9ffee1bfe508f2de710c41b4631c09dd8df358842bdfe140b3ee3033df10c159') throw new Error('F2 static CSS changed');

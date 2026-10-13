@@ -6,6 +6,18 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
 const out=process.env.MOTION_REPORT_DIR; if(!out) throw new Error('Set MOTION_REPORT_DIR to an external evidence directory'); fs.mkdirSync(out,{recursive:true});
 const sizes=[[1440,900],[1280,720],[1280,800],[1024,768],[768,1024],[390,844],[360,780]];
 function difference(a,b){const aa=PNG.sync.read(a),bb=PNG.sync.read(b);assert.equal(aa.width,bb.width);assert.equal(aa.height,bb.height);let pixels=0;for(let i=0;i<aa.data.length;i+=4)if(aa.data[i]!==bb.data[i]||aa.data[i+1]!==bb.data[i+1]||aa.data[i+2]!==bb.data[i+2]||aa.data[i+3]!==bb.data[i+3])pixels++;return {raw:pixels,meaningful:pixelmatch(aa.data,bb.data,null,aa.width,aa.height,{threshold:0.1,includeAA:false})};}
+// M06: with the pin active the workflow track is 700svh and its frames are validated by
+// validate-workflow.cjs; everything above and below the track must still match the baseline.
+function rows(buffer,y0,y1){const png=PNG.sync.read(buffer),out=new PNG({width:png.width,height:Math.max(0,y1-y0)});png.data.copy(out.data,0,y0*png.width*4,y1*png.width*4);return PNG.sync.write(out);}
+function pinnedDifference(a,b,ta,tb,boxesA,boxesB){assert.equal(ta.y,tb.y,'content above the workflow track moved');
+// Above the track: the same strict raster comparison as before.
+const above=difference(rows(a,0,ta.y),rows(b,0,tb.y));
+// Below the track: Chromium composites content painted after a sticky layer (grayscale instead of LCD
+// text antialiasing), so raster equality is not meaningful there. Every box must match exactly instead,
+// shifted by the 100svh the pinned track adds; the raster delta is recorded, not asserted.
+const shift=tb.h-ta.h;assert.equal(boxesA.length,boxesB.length,'elements after the workflow');boxesA.forEach((r,i)=>assert.deepEqual(r.some(v=>v)?[r[0],Math.round((r[1]+shift)*100)/100,r[2],r[3]]:r,boxesB[i],'box after the workflow #'+i));
+const ha=PNG.sync.read(a).height,hb=PNG.sync.read(b).height,below=difference(rows(a,ta.y+ta.h,ha),rows(b,tb.y+tb.h,hb));
+return {raw:above.raw,meaningful:above.meaningful,pinnedTrack:tb.h,boxesAfterTrack:boxesB.length,belowRasterOnly:below};}
 async function instrument(page){await page.addInitScript(()=>{
  window.evidence={lcp:0,cls:0,shifts:[],longTasks:[],calls:[],firstBoxes:null};
  new PerformanceObserver(list=>{for(const e of list.getEntries()){window.evidence.lcp=e.startTime;window.evidence.lcpElement=e.element?.className;}}).observe({type:'largest-contentful-paint',buffered:true});
@@ -20,7 +32,7 @@ async function instrument(page){await page.addInitScript(()=>{
 (async()=>{
  const browser=await chromium.launch({executablePath:process.env.MOTION_TEST_BROWSER,headless:true});const report={browser:browser.version(),matrix:[],performance:[]};
  if(!process.argv.includes('--performance-only'))for(const [width,height] of sizes){
- const shots={};
+ const shots={},tracks={},afters={};
  for(const mode of ['baseline','normal','no-js','reduce','main-blocked','all-blocked']){
  const context=await browser.newContext({viewport:{width,height},javaScriptEnabled:mode!=='no-js',reducedMotion:mode==='reduce'?'reduce':'no-preference'});const page=await context.newPage();const errors=[];
  page.on('pageerror',e=>errors.push(e.message));page.on('console',e=>{if(e.type()==='error')errors.push(e.text());});
@@ -28,10 +40,10 @@ async function instrument(page){await page.addInitScript(()=>{
  if(mode==='main-blocked')await page.route('**/motion.js',r=>r.fulfill({status:200,contentType:'text/javascript',body:'throw new Error("intentional test failure")'}));
  if(mode==='all-blocked')await page.route('**/*.js',r=>r.fulfill({status:200,contentType:'text/javascript',body:''}));
  await page.goto('http://127.0.0.1:'+(mode==='baseline'?8770:8771));await page.waitForTimeout(2300);
- const result=await page.evaluate(()=>({classes:document.documentElement.className,overflow:document.documentElement.scrollWidth>innerWidth,titleOpacity:getComputedStyle(document.querySelector('.mk-hero-title')).opacity,transforms:[...document.querySelectorAll('.hero-win,.hero-phone')].map(e=>getComputedStyle(e).transform),animations:document.getAnimations().map(a=>({target:a.effect.target.className,state:a.playState})),evidence:window.evidence}));
+ const result=await page.evaluate(()=>({classes:document.documentElement.className,overflow:document.documentElement.scrollWidth>innerWidth,titleOpacity:getComputedStyle(document.querySelector('.mk-hero-title')).opacity,transforms:[...document.querySelectorAll('.hero-win,.hero-phone')].map(e=>getComputedStyle(e).transform),animations:document.getAnimations().map(a=>({target:a.effect.target.className,state:a.playState})),evidence:window.evidence,track:(t=>({y:Math.round(t.getBoundingClientRect().top+scrollY),h:t.offsetHeight}))(document.querySelector('[data-flow-track]')),after:[...document.querySelectorAll('.mk-flow~section,.mk-flow~section *,.mk-footer,.mk-footer *')].map(e=>{const r=e.getBoundingClientRect();return [r.x,r.y+scrollY,r.width,r.height].map(v=>Math.round(v*100)/100)})}));
  assert.equal(result.overflow,false);assert.equal(result.titleOpacity,'1');if(mode==='main-blocked'){assert.equal(result.classes,'');assert.ok(errors.every(e=>e.includes('intentional test failure')));}else assert.deepEqual(errors,[]);
- const shot=await page.screenshot({fullPage:true});shots[mode]=shot;
- let diff=null;if(mode!=='baseline'){diff=difference(shots.baseline,shot);if(diff.meaningful>1){fs.writeFileSync(path.join(out,'debug-baseline.png'),shots.baseline);fs.writeFileSync(path.join(out,'debug-candidate.png'),shot);console.log(JSON.stringify(result));}assert.ok(diff.meaningful<=1,`${width}x${height} ${mode}: ${JSON.stringify(diff)} different pixels (tolerance: 1 raster pixel)`);}
+ const shot=await page.screenshot({fullPage:true});shots[mode]=shot;tracks[mode]=result.track;afters[mode]=result.after;
+ let diff=null;if(mode!=='baseline'){diff=result.track.h!==tracks.baseline.h?pinnedDifference(shots.baseline,shot,tracks.baseline,result.track,afters.baseline,result.after):difference(shots.baseline,shot);if(diff.meaningful>1){fs.writeFileSync(path.join(out,'debug-baseline.png'),shots.baseline);fs.writeFileSync(path.join(out,'debug-candidate.png'),shot);console.log(JSON.stringify(result));}assert.ok(diff.meaningful<=1,`${width}x${height} ${mode}: ${JSON.stringify(diff)} different pixels (tolerance: 1 raster pixel)`);}
  if([1440,1280,390].includes(width)&&(width!==1280||height===720)){
  await page.screenshot({path:path.join(out,`hero-${width}x${height}-${mode}.png`)});
  if(mode==='normal')fs.writeFileSync(path.join(out,`page-${width}x${height}-final.png`),shot);

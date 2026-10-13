@@ -242,6 +242,9 @@ const regressions = [
   ['F2 wheel hijacking', 'check.mjs', /F2 touch\/wheel/, (d) => write(d, 'site/motion.js', 'matchMedia("(prefers-reduced-motion: reduce)"); document.addEventListener("wheel",e=>e.preventDefault());')],
   ['F2 static frame geometry', 'check.mjs', /F2 static CSS/, (d) => edit(d, 'site/v4/02-home.css', (s) => s+'\n.flow-frame{padding:1px}\n')],
   ['F2 static frame data', 'check.mjs', /F2 static frames/, (d) => edit(d, 'site/index.html', (s) => s.replace('Bloco B · Apto 702','Bloco C · Apto 702'))],
+  ['M06 pin fora de R2', 'check.mjs', /M06 pin: layout/, (d) => edit(d, 'site/v4/03-motion.css', (s) => s.replace('(hover: hover) and (pointer: fine) and (min-width: 1024px) and (min-height: 600px) and (prefers-reduced-motion: no-preference) {\n  html.motion .flow-track', '(min-width: 1024px) and (min-height: 600px) and (prefers-reduced-motion: no-preference) {\n  html.motion .flow-track'))],
+  ['M06 runway math', 'check.mjs', /M06 pin: --mo-pin-scroll/, (d) => edit(d, 'site/v4/03-motion.css', (s) => s.replace('--mo-pin-scroll:600svh', '--mo-pin-scroll:500svh'))],
+  ['M06 elegibilidade JS', 'check.mjs', /M06 pin: elegibilidade/, (d) => edit(d, 'site/motion.js', (s) => s.replaceAll("matchMedia('(hover: hover) and (pointer: fine)", "matchMedia('(any-pointer: fine)"))],
   ['CTA WhatsApp sem nova aba', 'check.mjs', /nova aba/, (d) => edit(d, 'site/index.html', (s) => s.replace('target="_blank"', 'target="_self"'))],
   // invariantes da Homepage V3.1
   ['"Cena A" exposta ao público', 'check.mjs', /Cena A\/B\/C/, (d) => edit(d, 'site/index.html', (s) => s.replace('Etapas 01–02</span>', 'Etapas 01–02 · Cena A</span>'))],

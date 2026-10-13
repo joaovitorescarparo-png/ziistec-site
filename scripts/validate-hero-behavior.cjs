@@ -1,3 +1,4 @@
+// M06: pinned-workflow effects are persistent, paused scroll effects; entrance checks look at the Hero only.
 const {chromium}=require(process.env.MOTION_TEST_MODULES ? require('node:path').join(process.env.MOTION_TEST_MODULES,'playwright') : 'playwright');
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const out=process.env.MOTION_REPORT_DIR; if(!out) throw new Error('Set MOTION_REPORT_DIR to an external evidence directory'); fs.mkdirSync(out,{recursive:true});
@@ -12,9 +13,9 @@ const out=process.env.MOTION_REPORT_DIR; if(!out) throw new Error('Set MOTION_RE
  const context=await browser.newContext({viewport:{width,height}});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.addInitScript(()=>{window.calls=[];window.boxes=null;const original=Element.prototype.animate;Element.prototype.animate=function(keys,options){
  if(!window.boxes){window.boxes=[...document.querySelectorAll('.mk-hero-kicker,.mk-hero-title,.mk-hero-deck,.mk-hero-cta,.mk-hero-note,.hero-win,.hero-win .ov-tile,.hero-win .ov-table-head,.hero-win .ov-row,.hero-phone,.hero-phone .ph-head,.hero-phone .ph-panel,.hero-phone .ph-btns,.hero-toast,.hero-where')].map(e=>({cls:e.className,top:e.getBoundingClientRect().top,visible:e.getClientRects().length>0}));}
- window.calls.push({cls:this.className,keys,options});return original.call(this,keys,options);};});
+ window.calls.push({cls:this.className,keys,options,hero:!!this.closest('.mk-hero')});return original.call(this,keys,options);};});
  await page.goto('http://127.0.0.1:8771');await page.waitForTimeout(2100);
- const fold=await page.evaluate(()=>({boxes:window.boxes,calls:window.calls.filter(c=>c.options.duration>1&&!c.options.pseudoElement)}));
+ const fold=await page.evaluate(()=>({boxes:window.boxes,calls:window.calls.filter(c=>c.hero&&c.options.duration>1&&!c.options.pseudoElement)}));
  const expected=fold.boxes.filter(b=>b.visible&&b.top<height);
  assert.equal(fold.calls.length,expected.length,`${width}: fold count`);
  for(const box of fold.boxes.filter(b=>b.top>=height||!b.visible))assert.equal(fold.calls.some(c=>c.cls===box.cls),false,`${width} should skip ${box.cls}`);
@@ -31,14 +32,14 @@ const out=process.env.MOTION_REPORT_DIR; if(!out) throw new Error('Set MOTION_RE
  const o=await page.evaluate(()=>Number(getComputedStyle(document.querySelector('.hero-toast')).opacity));opacity.push(o);
  }
  await page.emulateMedia({reducedMotion:'reduce'});await page.waitForFunction(()=>document.getAnimations().length===0&&!document.documentElement.classList.contains('motion'));assert.equal(await page.evaluate(()=>window.ziisMotion.isPinEligible()),false);
- await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));await page.emulateMedia({reducedMotion:'no-preference'});await page.waitForTimeout(80);assert.equal(await page.evaluate(()=>document.getAnimations().filter(a=>a.effect.getTiming().duration>1).length),0);
+ await page.evaluate(()=>scrollTo({top:0,behavior:'instant'}));await page.emulateMedia({reducedMotion:'no-preference'});await page.waitForTimeout(80);assert.equal(await page.evaluate(()=>document.getAnimations().filter(a=>a.effect.getTiming().duration>1&&a.effect.target.closest('.mk-hero')).length),0);
  results.push({test:'fold-timings-M05-live-reduce',width,height,fold,opacity,errors});assert.deepEqual(errors,[]);await context.close();console.log('behavior passed '+width+'x'+height);
  }
  // Preference changes DURING the entrance, and navigation must never replay it.
  const context=await browser.newContext({viewport:{width:1280,height:720}});const page=await context.newPage();await page.goto('http://127.0.0.1:8771');await page.waitForTimeout(100);assert.ok(await page.evaluate(()=>document.getAnimations().some(a=>a.effect.getTiming().duration>1)));
  await page.emulateMedia({reducedMotion:'reduce'});await page.waitForTimeout(60);assert.equal(await page.evaluate(()=>document.getAnimations().length),0);assert.equal(await page.evaluate(()=>getComputedStyle(document.querySelector('.mk-hero-title')).opacity),'1');results.push({test:'reduce-during-entrance',passed:true});
- await page.emulateMedia({reducedMotion:'no-preference'});await page.goto('http://127.0.0.1:8771/#como-funciona');await page.waitForTimeout(600);assert.equal(await page.evaluate(()=>document.getAnimations().filter(a=>a.effect.getTiming().duration>1).length),0);results.push({test:'anchor-no-entrance',passed:true});
- await page.goto('http://127.0.0.1:8771/privacidade.html');assert.equal(await page.locator('script[src*="motion"]').count(),0);await page.goBack();await page.waitForTimeout(600);assert.equal(await page.evaluate(()=>document.getAnimations().filter(a=>a.effect.getTiming().duration>1).length),0);results.push({test:'back-navigation-no-replay',passed:true});
+ await page.emulateMedia({reducedMotion:'no-preference'});await page.goto('http://127.0.0.1:8771/#como-funciona');await page.waitForTimeout(600);assert.equal(await page.evaluate(()=>document.getAnimations().filter(a=>a.effect.getTiming().duration>1&&a.effect.target.closest('.mk-hero')).length),0);results.push({test:'anchor-no-entrance',passed:true});
+ await page.goto('http://127.0.0.1:8771/privacidade.html');assert.equal(await page.locator('script[src*="motion"]').count(),0);await page.goBack();await page.waitForTimeout(600);assert.equal(await page.evaluate(()=>document.getAnimations().filter(a=>a.effect.getTiming().duration>1&&a.effect.target.closest('.mk-hero')).length),0);results.push({test:'back-navigation-no-replay',passed:true});
  await page.goto('http://127.0.0.1:8771');await page.waitForTimeout(2100);await page.setViewportSize({width:390,height:844});await page.waitForTimeout(80);assert.equal(await page.evaluate(()=>document.getAnimations().length),0);results.push({test:'resize-to-mobile-clears-M05',passed:true});
  // R2 positive and negative device profiles; workflow remains static in all of them.
  for(const [width,height] of [[1440,900],[1024,600],[1440,599],[1023,900]]){await page.setViewportSize({width,height});const eligible=await page.evaluate(()=>window.ziisMotion.isPinEligible());assert.equal(eligible,width>=1024&&height>=600);results.push({test:'R2-fine-pointer',width,height,eligible});}
