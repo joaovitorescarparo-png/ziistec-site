@@ -1,5 +1,7 @@
 # V3.2 foundation and Hero M01–M05
 
+**Status: V3.2 HERO FOUNDATION — APPROVED** (after the performance amendment below).
+
 Scope: F2, safe boot, local motion vocabulary and Hero M01–M05, from
 `0c6b4fff5c2ecfef0248f56aa54f0be8b62cc2b9` on `feat/homepage-v32-motion`.
 Source: frozen “ZiisTec V3.2 — Motion Blueprint 2.md”, SHA-256
@@ -106,3 +108,27 @@ solely for localhost HTTP; the repository/deployment CSP is unchanged.
 
 No migrations, push, merge, Preview, Production or external configuration change.
 Engineering stops at M05. Acceptance remains qualified by baseline load CLS.
+
+## Performance amendment (approved)
+
+The investigation of the residual load CLS is closed. It is caused by the
+fallback → webfont swap, measured in the baseline (`0c6b4ff`) as well as in
+motion builds, and not by the M01–M05 timeline. Fonts are not changed in this
+phase. The acceptance criteria are formally amended; the measurements recorded
+above stay exactly as they were.
+
+| Criterion | Before | Amended |
+|---|---|---|
+| CLS | 0, absolute | **Motion-attributable CLS = 0**, and **total page CLS ≤ 0.01** in the validation viewports |
+| LCP | no regression above 200 ms | **no regression above 200 ms causally attributable** to the boot script, `motion-pending` or M01–M05 |
+
+- The amendment does not authorise any new layout regression. It only accepts
+  the residual font-swap shift that was already isolated and measured.
+- Motion-attributable CLS means any layout-shift entry whose sources are moved
+  by motion code (pin layout, carriers, boot classes, choreography). It must be 0.
+- LCP benchmark deltas that occur before the timeline starts and have no causal
+  link to motion do not block motion work.
+- No automated gate encoded the old absolute criteria: `npm run check` has no
+  CLS/LCP assertion, and `validate-hero.cjs` records LCP/CLS without asserting
+  them. The only CLS assertion, scroll-only CLS = 0 in
+  `validate-hero-behavior.cjs`, is a motion-attributable check and stays.
