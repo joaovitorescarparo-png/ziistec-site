@@ -50,6 +50,12 @@ html.motion .hero-win .ov-row[data-motion-tint]::before { content:""; position:a
   html.motion .flow-frame:not(:first-child) .flow-place,
   html.motion .flow-frame:not(:first-child) .flow-devices,
   html.motion .flow-frame:not(:first-child) .flow-foot > span:last-child { opacity:0; }
+  html.motion .flow-frame .rail-fill { width:100%; transform-origin:0 50%; scale:0 1; }
+  html.motion .flow-frame .rail-p2 .rail-fill { scale:.2 1; }
+  html.motion .flow-frame .rail-p3 .rail-fill { scale:.4 1; }
+  html.motion .flow-frame .rail-p4 .rail-fill { scale:.6 1; }
+  html.motion .flow-frame .rail-p5 .rail-fill { scale:.8 1; }
+  html.motion .flow-frame .rail-p6 .rail-fill { scale:1 1; }
 }
 /* Stage composition inside the 100svh pin. */
 @media (hover: hover) and (pointer: fine) and (min-width: 1280px) and (min-height: 900px) and (prefers-reduced-motion: no-preference) {

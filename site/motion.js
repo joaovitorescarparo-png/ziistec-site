@@ -136,7 +136,7 @@
   });
 })();
 (() => {
-  // M06: pinned workflow (M07–M10 add the choreography). Scroll is native; one rAF per scroll maps scrollY to p (0 → 6 over
+  // M06–M08: pinned workflow, copy and rail (M09–M10 add T12 and T23). Scroll is native; one rAF per scroll maps scrollY to p (0 → 6 over
   // 600svh) and seeks paused, finite WAAPI effects. Every effect ends on the approved static frame.
   const root = document.documentElement;
   const track = window.IntersectionObserver && document.querySelector('[data-flow-track]');
@@ -164,6 +164,18 @@
     if (!segs.has(el)) segs.set(el, {});
     (segs.get(el)[prop] ||= []).push({ a, b, from, to, ease });
   }
+  const rest = el => getComputedStyle(el).opacity;
+  // Element enters (0 → rest) or leaves (rest → 0) with an optional translate.
+  function enter(el, a, b, dx = 0, dy = 0, ease, r = rest(el)) {
+    if (!el) return;
+    seg(el, 'opacity', a, b, '0', r, ease);
+    if (dx || dy) seg(el, 'translate', a, b, `${dx}px ${dy}px`, '0px 0px', ease);
+  }
+  function leave(el, a, b, dx = 0, dy = 0, ease, r = rest(el)) {
+    if (!el) return;
+    seg(el, 'opacity', a, b, r, '0', ease);
+    if (dx || dy) seg(el, 'translate', a, b, '0px 0px', `${dx}px ${dy}px`, ease);
+  }
   const step = (el, p, from, to, prop = 'opacity') => seg(el, prop, p, p, from, to, E.linear);
   const off = p => clamp((p - P0) / SPAN);
   function compile() {
@@ -181,6 +193,8 @@
       anims.push(animation);
     }
   }
+  const box = el => el.getBoundingClientRect();
+
   function build() {
     teardown();
     segs = new Map();
@@ -195,12 +209,28 @@
       const [inP, outP] = t[2] ? [t[0], t[1]] : [mid(t), mid(t)];
       step(dev[k + 1], inP, '0', '1');
       step(dev[k], outP, '1', '0');
-      // M06: until M07, every layer of the outgoing frame is replaced at the midpoint.
-      for (const s of ['.flow-count', '.flow-num', '.flow-step-title', '.flow-step-desc', '.flow-foot > span:last-child']) {
-        step(q(k, s), mid(t), '1', '0');
-        step(q(k + 1, s), mid(t), '0', '1');
+      // M07: copy, numeral and step count.
+      for (const s of ['.flow-count', '.flow-step-title', '.flow-step-desc', '.flow-foot > span:last-child']) {
+        leave(q(k, s), at(k, 0.1), at(k, 0.35), 0, -12, E.travel, '1');
+        enter(q(k + 1, s), at(k, 0.4), at(k, 0.7), 0, 12, E.travel, '1');
       }
+      seg(q(k, '.flow-num'), 'opacity', at(k, 0.3), at(k, 0.4), '1', '0', E.travel);
+      seg(q(k, '.flow-num'), 'translate', at(k, 0.3), at(k, 0.4), '0px 0px', '0px -40%', E.travel);
+      seg(q(k + 1, '.flow-num'), 'opacity', at(k, 0.4), at(k, 0.5), '0', '1', E.travel);
+      seg(q(k + 1, '.flow-num'), 'translate', at(k, 0.4), at(k, 0.5), '0px 40%', '0px 0px', E.travel);
     });
+    // M08: one continuous rail on all six frames; the token rides the same value.
+    const rails = frames.map(f => f.querySelector('.rail'));
+    const xs = rails.map(r => box(r.querySelector('.rail-token')).x - box(r).x);
+    const fillAt = [0, 0.2, 0.4, 0.6, 0.8, 1];
+    rails.forEach((r, n) => {
+      const fill = r.querySelector('.rail-fill'), token = r.querySelector('.rail-token');
+      T.forEach((t, k) => {
+        seg(fill, 'scale', t[0], t[1], `${fillAt[k]} 1`, `${fillAt[k + 1]} 1`, E.linear);
+        seg(token, 'translate', t[0], t[1], `${xs[k] - xs[n]}px 0px`, `${xs[k + 1] - xs[n]}px 0px`, E.linear);
+      });
+    });
+
     compile();
     built = true;
     shown = [-1, -1];
@@ -223,7 +253,7 @@
     const stage = frames[0].offsetHeight;
     return (scrollY - (track.getBoundingClientRect().top + scrollY)) / stage;
   }
-  // Rail and place chip switch at each midpoint (M08 adds the 160 / 240 ms crossfades).
+  // Rail stops (160 ms) and the place chip (240 ms when its words change) switch at each midpoint.
   function swap(group, n, ms) {
     const els = frames.map(f => f.querySelector(group ? '.flow-place' : '.rail'));
     const old = shown[group];
@@ -256,8 +286,8 @@
     if (time !== applied) for (const a of anims) a.currentTime = time;
     applied = time;
     const n = T.filter(t => p >= mid(t)).length;
-    if (shown[0] !== n) swap(0, n, 0);
-    if (shown[1] !== n) swap(1, n, 0);
+    if (shown[0] !== n) swap(0, n, 160);
+    if (shown[1] !== n) swap(1, n, 240);
     frames.forEach((f, i) => {
       const t = T[i - 1], u = T[i];
       f.classList.toggle('mo-over', !!(t && t[2] && p > t[0] && p < t[1]));
