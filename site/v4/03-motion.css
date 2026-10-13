@@ -56,6 +56,20 @@ html.motion .hero-win .ov-row[data-motion-tint]::before { content:""; position:a
   html.motion .flow-frame .rail-p4 .rail-fill { scale:.6 1; }
   html.motion .flow-frame .rail-p5 .rail-fill { scale:.8 1; }
   html.motion .flow-frame .rail-p6 .rail-fill { scale:1 1; }
+  html.motion .flow-frame .app-side { position:relative; }
+  /* Overlay: during T12/T23 the incoming frame lies on the outgoing one; its identical chrome is not drawn twice. */
+  html.motion .flow-frame.mo-over .app { background:none; border-color:transparent; }
+  html.motion .flow-frame.mo-over .app-bar,
+  html.motion .flow-frame.mo-over .app-side { visibility:hidden; }
+  html.motion .flow-frame.mo-over .mo-crumb,
+  html.motion .flow-frame.mo-over .mo-show,
+  html.motion .flow-frame.mo-over .mo-ghost { visibility:visible; }
+  html.motion .flow-frame.mo-over .app-mod.is-active,
+  html.motion .flow-frame.mo-under .app-mod.is-active { background:none; }
+  html.motion .mo-ghost { position:absolute; inset:16px 12px auto; z-index:-1; background:var(--zt-brand-tint); visibility:hidden; pointer-events:none; }
+  html.motion .mo-ghost > * { visibility:hidden !important; }
+  html.motion .mo-carrier { position:absolute; z-index:5; margin:0; transform-origin:0 0; pointer-events:none; }
+  html.motion .mo-carrier.scr-head { gap:12px; }
 }
 /* Stage composition inside the 100svh pin. */
 @media (hover: hover) and (pointer: fine) and (min-width: 1280px) and (min-height: 900px) and (prefers-reduced-motion: no-preference) {

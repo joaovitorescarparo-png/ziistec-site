@@ -136,7 +136,7 @@
   });
 })();
 (() => {
-  // M06–M08: pinned workflow, copy and rail (M09–M10 add T12 and T23). Scroll is native; one rAF per scroll maps scrollY to p (0 → 6 over
+  // M06–M09: pinned workflow, copy, rail and T12 (M10 adds T23). Scroll is native; one rAF per scroll maps scrollY to p (0 → 6 over
   // 600svh) and seeks paused, finite WAAPI effects. Every effect ends on the approved static frame.
   const root = document.documentElement;
   const track = window.IntersectionObserver && document.querySelector('[data-flow-track]');
@@ -146,7 +146,7 @@
   const pinQuery = matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px) and (min-height: 600px)');
   const P0 = -0.5, P1 = 6, SPAN = P1 - P0;
   // [start, end, overlay] in stage heights; overlay = the incoming frame lies over the outgoing one.
-  const T = [[0.5, 1.2, 0], [1.55, 2.5, 0], [2.85, 3.45, 0], [3.8, 4.75, 0], [5.05, 5.65, 0]];
+  const T = [[0.5, 1.2, 1], [1.55, 2.5, 0], [2.85, 3.45, 0], [3.8, 4.75, 0], [5.05, 5.65, 0]];
   const mid = t => t[0] + (t[1] - t[0]) / 2;
   const DWELL = [0.25, 1.375, 2.675, 3.625, 4.9, 5.825];
   const E = {
@@ -193,13 +193,56 @@
       anims.push(animation);
     }
   }
+  // Carrier: a visual clone (aria-hidden) in `holder`, flown through `path` points given in the
+  // holder's local CSS px: [p, {x, y}, height, ease]. Scale follows the requested height.
+  function carrier(src, holder, path, extra) {
+    const clone = src.cloneNode(true);
+    clone.classList.add('mo-carrier');
+    if (extra) clone.classList.add(extra);
+    clone.setAttribute('aria-hidden', 'true');
+    holder.append(clone);
+    extras.push(clone);
+    const x0 = clone.offsetLeft, y0 = clone.offsetTop, h0 = clone.offsetHeight;
+    for (let i = 1; i < path.length; i++) {
+      const [pa, ra, ha] = path[i - 1], [pb, rb, hb, ease = E.travel] = path[i];
+      seg(clone, 'translate', pa, pb, `${ra.x - x0}px ${ra.y - y0}px`, `${rb.x - x0}px ${rb.y - y0}px`, ease);
+      seg(clone, 'scale', pa, pb, `${ha / h0}`, `${hb / h0}`, ease);
+    }
+    return clone;
+  }
+  // Screen rect → local CSS px of `holder` (origin = its top-left), measured at the holder's scale k.
+  const local = (r, holder, k = box(holder).width / holder.offsetWidth) => ({ x: (r.x - box(holder).x) / k, y: (r.y - box(holder).y) / k, h: (r.height || r.h) / k });
   const box = el => el.getBoundingClientRect();
+  // Nav indicator and crumb crossfade for an overlay transition (bottom k, top k + 1).
+  function chrome(k) {
+    const items = [qa(k, '.app-mod'), qa(k + 1, '.app-mod')];
+    const from = items[0].findIndex(m => m.classList.contains('is-active'));
+    const to = items[1].findIndex(m => m.classList.contains('is-active'));
+    const ghost = items[0][from].cloneNode(true);
+    ghost.classList.replace('is-active', 'mo-ghost');
+    ghost.setAttribute('aria-hidden', 'true');
+    q(k + 1, '.app-side').append(ghost);
+    extras.push(ghost);
+    const y = i => items[1][i].offsetTop - items[1][0].offsetTop;
+    seg(ghost, 'translate', at(k, 0.2), at(k, 0.6), `0px ${y(from)}px`, `0px ${y(to)}px`, E.travel);
+    for (const i of [from, to]) {
+      items[1][i].classList.add('mo-show');
+      leave(items[0][i], at(k, 0.2), at(k, 0.6), 0, 0, E.travel);
+      enter(items[1][i], at(k, 0.2), at(k, 0.6), 0, 0, E.travel);
+    }
+    leave(q(k, '.mo-crumb'), at(k, 0.3), at(k, 0.45));
+    enter(q(k + 1, '.mo-crumb'), at(k, 0.45), at(k, 0.6));
+  }
 
   function build() {
     teardown();
     segs = new Map();
     anims = [];
     extras = [];
+    for (const crumb of track.querySelectorAll('.app-crumb')) {
+      const text = [...crumb.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
+      if (text) { const span = document.createElement('span'); span.className = 'mo-crumb'; text.replaceWith(span); span.append(text); }
+    }
     // Pre-roll: the first frame rises into the pin.
     const dev = frames.map(f => f.querySelector('.flow-devices'));
     seg(dev[0], 'translate', P0, 0, '0px 24px', '0px 0px', E.standard);
@@ -230,6 +273,24 @@
         seg(token, 'translate', t[0], t[1], `${xs[k] - xs[n]}px 0px`, `${xs[k + 1] - xs[n]}px 0px`, E.linear);
       });
     });
+
+    // M09 · T12: approved quote → OS #0248. D1 ends on the approval pill.
+    const pill = q(0, '.scr-head .ui-pill');
+    seg(pill, 'opacity', 0.15, 0.225, '0', '1');
+    seg(pill, 'scale', 0.15, 0.225, '0.9', '1');
+    ['.scr-title', '.scr-sub', '.orc-lines', '.orc-total', '.orc-actions'].forEach((s, i) => leave(q(0, s), at(0, 0.04 * i), at(0, 0.2 + 0.04 * i), 0, -8));
+    const head = q(0, '.scr-head'), origin = q(1, '.os-field.is-accent .os-val');
+    step(head, at(0, 0.2), '1', '0');
+    const w1 = q(1, '.fd-win'), a12 = local(box(head), w1), b12 = local(box(origin), w1);
+    const c12 = carrier(head, w1, [[at(0, 0.2), a12, a12.h], [at(0, 0.6), b12, b12.h]], 'scr-head');
+    step(c12, P0, '0', '0');
+    step(c12, at(0, 0.2), '0', '1');
+    seg(c12, 'opacity', at(0, 0.6), at(0, 0.66), '1', '0');
+    for (const s of ['.scr-head', '.scr-title', '.scr-sub']) enter(q(1, s), at(0, 0.45), at(0, 0.8), 0, 12);
+    qa(1, '.os-grid .os-field').forEach((el, i) => enter(el, at(0, 0.5 + 0.04 * i), at(0, 0.7 + 0.04 * i), 0, 8));
+    enter(q(1, '.os-field.is-accent'), at(0, 0.6), at(0, 0.66));
+    enter(q(1, '.fd-toast'), at(0, 0.7), at(0, 1), -24, 0);
+    chrome(0);
 
     compile();
     built = true;
