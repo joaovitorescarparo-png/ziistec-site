@@ -247,6 +247,8 @@ const regressions = [
   ['F2 static frame data', 'check.mjs', /F2 static frames/, (d) => edit(d, 'site/index.html', (s) => s.replace('Bloco B · Apto 702','Bloco C · Apto 702'))],
   ['M06 pin fora de R2', 'check.mjs', /M06 pin: layout/, (d) => edit(d, 'site/v4/03-motion.css', (s) => s.replace(/\(hover: hover\) and \(pointer: fine\) and (\(min-width: 1024px\) and \(min-height: 600px\) and \(prefers-reduced-motion: no-preference\) \{\r?\n  html\.motion \.flow-track)/, '$1'))],
   ['M06 runway math', 'check.mjs', /M06 pin: --mo-pin-scroll/, (d) => edit(d, 'site/v4/03-motion.css', (s) => s.replace('--mo-pin-scroll:600svh', '--mo-pin-scroll:500svh'))],
+  ['Hero LCP título oculto no CSS', 'check.mjs', /Hero LCP/, (d) => edit(d, 'site/v4/03-motion.css', (s) => s.replace('.mk-hero-title { translate:0 16px; }', '.mk-hero-title { opacity:0; translate:0 16px; }'))],
+  ['Hero LCP clip reveal no JS', 'check.mjs', /Hero LCP/, (d) => edit(d, 'site/motion.js', (s) => s.replace("add('.mk-hero-title', 60, xl, '0 16px', emphasis, { opacity: 1 });", "add('.mk-hero-title', 60, xl, '0 24px', emphasis, { clipPath: 'inset(0 0 100% 0)' });"))],
   ['M10 scheduler de scroll concorrente', 'check.mjs', /M10 scheduler/, (d) => edit(d, 'site/motion.js', (s) => s + "\naddEventListener('scroll', () => requestAnimationFrame(() => {}), { passive: true });\n")],
   ['M10 segundo requestAnimationFrame', 'check.mjs', /M10 scheduler/, (d) => edit(d, 'site/motion.js', (s) => s + "\naddEventListener('resize', () => requestAnimationFrame(() => {}));\n")],
   ['M06 elegibilidade JS', 'check.mjs', /M06 pin: elegibilidade/, (d) => edit(d, 'site/motion.js', (s) => s.replaceAll("matchMedia('(hover: hover) and (pointer: fine)", "matchMedia('(any-pointer: fine)"))],

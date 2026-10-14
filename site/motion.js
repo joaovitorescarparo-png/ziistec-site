@@ -93,13 +93,13 @@
         const rect = element.getBoundingClientRect();
         if (!element.getClientRects().length || rect.top >= innerHeight) return;
         timeline.push({ element, delay: delay + index * stagger, duration: duration * durationScale,
-          easing, from: { opacity: 0, translate, ...extra }, to: { opacity: 1, translate: '0 0', ...(extra.scale ? { scale: 1 } : {}), ...(extra.clipPath ? { clipPath: 'inset(0 0 -12% 0)' } : {}) } });
+          easing, from: { opacity: 0, translate, ...extra }, to: { opacity: 1, translate: '0 0', ...(extra.scale ? { scale: 1 } : {}) } });
       });
     }
     add('.mk-hero-kicker', 0, 320, `0 ${small}`);
-    // R4: active mobile CPU-throttled trials exceeded +200ms with the clip reveal.
-    // Frozen fallback: opaque title, translate 16px only; desktop/tablet keep the reveal.
-    add('.mk-hero-title', 60, xl, mobile ? '0 16px' : '0 24px', emphasis, mobile ? { opacity: 1 } : { clipPath: 'inset(0 0 100% 0)' });
+    // R4 at every width: the clip reveal held the LCP element (+200ms on mobile, ≈ +800ms on
+    // desktop). The title is opaque and unmasked from first paint; it only rises 16px.
+    add('.mk-hero-title', 60, xl, '0 16px', emphasis, { opacity: 1 });
     add('.mk-hero-deck', 240, enter, `0 ${rise}`);
     add('.mk-hero-cta', 310, enter, `0 ${rise}`);
     add('.mk-hero-note', 450, 320);

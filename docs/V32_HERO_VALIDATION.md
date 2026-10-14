@@ -100,7 +100,7 @@ Export `0c6b4ff` with `git archive` into a disposable directory and run that
 fixture's `scripts/build.mjs`. In one terminal run
 `node scripts/serve-motion-validation.cjs` (baseline :8770, candidate :8771).
 Then run `node scripts/validate-hero.cjs --matrix-only`,
-`node scripts/validate-hero-behavior.cjs`, and
+`node scripts/validate-hero-behavior.cjs`, `node scripts/validate-hero-lcp.cjs`, and
 `node scripts/validate-hero.cjs --performance-only` and
 `node scripts/validate-hero.cjs --performance-only --cpu-only` sequentially. The local HTTP
 server applies all approved CSP directives except HTTPS upgrade, which is omitted
@@ -132,3 +132,35 @@ above stay exactly as they were.
   CLS/LCP assertion, and `validate-hero.cjs` records LCP/CLS without asserting
   them. The only CLS assertion, scroll-only CLS = 0 in
   `validate-hero-behavior.cjs`, is a motion-attributable check and stays.
+
+## Desktop LCP closure (M01 hero copy)
+
+Measured in the M10 hardening: with the `clip-path` reveal, the hero title (the
+LCP element) waited for the reveal on desktop, ≈ 1 s against ≈ 0.2 s at
+`0c6b4ff` (+780–820 ms). R4, approved for mobile, now applies at every width:
+
+- `.mk-hero-title` is no longer in the hidden `motion-pending` start state; it
+  paints at opacity 1 with no `clip-path` or mask, 16px below its place.
+- The entrance animates only `translate 0 16px → 0` from opacity 1 (delay 60,
+  640 ms desktop / 544 ms tablet, emphasis). Kicker, deck, CTAs, window, KPIs,
+  phone, toast and M02–M05 are unchanged.
+- Gate: `check.mjs` fails if a motion rule hides, masks or clips the title, or if
+  its entrance starts below opacity 1 or uses `clipPath` (two mutation tests).
+  `validate-hero-behavior.cjs` asserts the same keyframe at every width.
+
+Evidence, `node scripts/validate-hero-lcp.cjs` (7 valid paired cold loads per
+viewport, order alternated, hero entrance ran in every candidate load; LCP in ms):
+
+| Viewport | CPU | `0c6b4ff` median / p75 / worst | V3.2 median / p75 / worst | Pair delta median / p75 / worst | LCP element |
+|---|---|---|---|---|---|
+| 1440×900 | 1× | 192 / 196 / 236 | 144 / 152 / 152 | −44 / −28 / −12 | `.mk-hero-title` |
+| 1280×800 | 1× | 172 / 196 / 200 | 152 / 156 / 160 | −28 / −12 / +20 | `.mk-hero-title` |
+| 1280×720 | 1× | 184 / 196 / 240 | 140 / 148 / 164 | −48 / −28 / −20 | `.mk-hero-title` |
+| 1024×768 | 1× | 156 / 184 / 204 | 136 / 152 / 168 | −20 / −4 / +24 | `.mk-hero-title` |
+| 390×844 (R4) | 4× | 440 / 524 / 540 | 272 / 292 / 336 | −180 / +24 / +88 | `.mk-hero-title` |
+
+In every candidate load the title's first rendering frame already has opacity 1
+and no clip, and the title's first LCP paint equals first contentful paint: the
+title no longer waits for any reveal. `--performance-only --cpu-only` (390×844):
+median delta −20 ms. Hero matrix: 0 raw pixels from `0c6b4ff` in every fallback
+mode at 7 sizes; hero behaviour 20/20.

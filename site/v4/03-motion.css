@@ -22,7 +22,6 @@
 /* Hidden first-paint states exist only during the boot's bounded pending phase.
    The main script measures final boxes synchronously, then uses finite WAAPI effects. */
 html.motion.motion-pending .mk-hero-kicker,
-html.motion.motion-pending .mk-hero-title,
 html.motion.motion-pending .mk-hero-deck,
 html.motion.motion-pending .mk-hero-cta,
 html.motion.motion-pending .mk-hero-note,
@@ -33,10 +32,9 @@ html.motion.motion-pending .hero-where { opacity:0; }
 /* Only the tint is a pseudo-element; the approved border and content stay intact. */
 html.motion .hero-win .ov-row[data-motion-tint] { position:relative; isolation:isolate; background:transparent; }
 html.motion .hero-win .ov-row[data-motion-tint]::before { content:""; position:absolute; inset:0; border-radius:inherit; background:var(--zt-dark-surface-200); z-index:-1; }
-/* R4 approved mobile LCP fallback: title is never transparent or clipped. */
-@media (max-width:639px) {
-  html.motion.motion-pending .mk-hero-title { opacity:1; translate:0 16px; }
-}
+/* R4 LCP-safe title, every width (mobile since M01, desktop/tablet since the LCP closure): the
+   LCP element is never transparent, masked or clipped; it paints in place except a 16px rise. */
+html.motion.motion-pending .mk-hero-title { translate:0 16px; }
 /* M06 pin (R2 + safety floor). Layout only: stage 100svh, track 700svh, sticky frames
    stacked in one grid cell. Inactive layers start hidden; motion.js scrubs them. */
 @media (hover: hover) and (pointer: fine) and (min-width: 1024px) and (min-height: 600px) and (prefers-reduced-motion: no-preference) {

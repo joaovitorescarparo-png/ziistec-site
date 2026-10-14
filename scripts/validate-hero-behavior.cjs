@@ -21,7 +21,7 @@ const out=process.env.MOTION_REPORT_DIR; if(!out) throw new Error('Set MOTION_RE
  for(const box of fold.boxes.filter(b=>b.top>=height||!b.visible))assert.equal(fold.calls.some(c=>c.cls===box.cls),false,`${width} should skip ${box.cls}`);
  const phone=fold.calls.find(c=>c.cls==='hero-phone');if(phone)assert.equal(phone.keys[0].translate,`0 ${width<640?32:width<1024?40:64}px`);
  const title=fold.calls.find(c=>c.cls==='mk-hero-title');assert.equal(title.options.delay,60);assert.equal(title.options.duration,width<1024?544:640);assert.equal(title.options.easing,'cubic-bezier(0.16,1,0.3,1)');
- if(width<640){assert.equal(title.keys[0].opacity,1);assert.equal(title.keys[0].translate,'0 16px');assert.equal(title.keys[0].clipPath,undefined);}else assert.equal(title.keys[0].clipPath,'inset(0 0 100% 0)');
+ assert.equal(title.keys[0].opacity,1);assert.equal(title.keys[0].translate,'0 16px');assert.equal(title.keys[0].clipPath,undefined);
  const ctaDelays=fold.calls.filter(c=>c.cls.includes('mk-hero-cta')).map(c=>c.options.delay);assert.deepEqual(ctaDelays,[310,380]);
  const win=fold.calls.find(c=>c.cls==='hero-win');if(win)assert.equal(win.keys[0].scale,width<640?undefined:0.98);
  const geometry=await page.evaluate(()=>{const e=document.querySelector('.mk-hero-stage'),r=e.getBoundingClientRect();return {stageTop:r.top+scrollY,stageHeight:r.height};});

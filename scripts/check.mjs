@@ -257,6 +257,12 @@ if(/position:\s?sticky/.test(motionCss)){
   const count=re=>(motionJs.match(re)||[]).length;
   if(count(/addEventListener\(\s*['"]scroll['"]/g)>1||/\bonscroll\b/.test(motionJs)||count(/\brequestAnimationFrame\(/g)>1||/\bcancelAnimationFrame\(/.test(motionJs)) throw new Error('M10 scheduler: motion.js precisa de um único listener de scroll e um único requestAnimationFrame');
 }
+// Hero LCP closure: the hero title (LCP element) is never hidden, masked or clipped by motion.
+{
+  const titleRules=[...motionCss.matchAll(/([^{}]*\.mk-hero-title[^{}]*)\{([^}]*)\}/g)].map(m=>m[2]);
+  const titleCall=motionJs.split('\n').find(line=>line.includes("add('.mk-hero-title'"));
+  if(titleRules.some(body=>/opacity:\s?0(?![.\d])|clip-path|visibility:\s?hidden/.test(body))||!titleCall||/clipPath|opacity:\s?0(?![.\d])/.test(titleCall)||!/opacity:\s?1\b/.test(titleCall)) throw new Error('Hero LCP: .mk-hero-title precisa ser visível desde o primeiro paint (sem opacity 0, clip-path ou máscara)');
+}
 // F2.6: approved CSS and markup are immutable, apart from the two external scripts.
 const normalizedHash=source=>sha256(Buffer.from(source.replace(/\r\n/g,'\n')));
 if(normalizedHash(await read('site/v4/01-tokens.css'))!=='61e4a5bdf990eec0adf38acb14253d3e2e59dd59743b5aa98c2b31141e6487b8' || normalizedHash(await read('site/v4/02-home.css'))!=='9ffee1bfe508f2de710c41b4631c09dd8df358842bdfe140b3ee3033df10c159') throw new Error('F2 static CSS changed');
