@@ -60,10 +60,35 @@ and the crumb text wrapper are runtime, `aria-hidden` DOM only.
   identical at the M05 head (font swap); M06–M10 add no shift.
 - If the main script fails, the boot watchdog restores the static page after
   1500 ms, which returns the track to its static height (failure mode only).
-- `motion.js` + boot use 7.9 of the frozen 8 KB gzip budget; M11–M21 need a
-  budget decision before they can be added.
+- At M10 (`f11e7f8`), `motion.js` + boot measured 7.9 KB gzip against the then
+  frozen 8 KB budget. Runtime budget amendment 2 below replaces that budget.
 - The numeral roll has no clipping box (no inner wrapper in the frozen markup).
 - Real-device frame pacing (laptops, Safari, trackpads) is still manual.
+
+## Runtime budget amendment 2 (approved)
+
+Applies from the M10 hardening. The 8 KB figure and the measurements taken
+against it are kept as recorded.
+
+| Criterion | Before | Amended |
+|---|---|---|
+| `motion-boot.js` + `motion.js`, gzip | at most 8 KB | **target ≤ 12 KB, hard ceiling 16 KB**; above 16 KB needs a new approval |
+| Library | none | none: no motion library is allowed |
+
+- Every runtime target stays: one passive scroll listener, at most one pending
+  `requestAnimationFrame`, reads before writes, transform and opacity only,
+  60 fps, no long task over 50 ms while scrolling the workflow.
+- `motion-boot.js` alone stays under 1 KB.
+- The size test in `scripts/tooling.test.mjs` fails above the 16 KB ceiling and
+  reports the size against the 12 KB target.
+
+## Acceptance
+
+Acceptance uses performance amendment 1 (`V32_HERO_VALIDATION.md`):
+motion-attributable CLS = 0; total page CLS ≤ 0.01 in the validation viewports;
+no LCP regression above 200 ms that is causally attributable to motion. No long
+task over 50 ms while scrolling the workflow; dwells equal the approved static
+frames; no R$ on the phone and no R$ 2.420 in any frame or transition.
 
 Reproduce as in `V32_HERO_VALIDATION.md`, then
 `node scripts/validate-workflow.cjs [--video]`.

@@ -64,11 +64,14 @@ test('main: watchdog latches startup before the bounded fonts wait', async () =>
   assert.deepEqual(cleared, [17]);
   assert.deepEqual(waits, [400]);
 });
-test('motion scripts: syntax and frozen size budgets', async () => {
+// Runtime budget amendment 2: boot + main gzip target ≤ 12 KB, hard ceiling 16 KB (new approval above).
+test('motion scripts: syntax and amended size budgets', async (t) => {
   const files = ['motion-boot.js', 'motion.js'];
   const sources = await Promise.all(files.map(f => readFile(join(root, 'site', f))));
   assert.ok(sources[0].length < 1024);
-  assert.ok(gzipSync(Buffer.concat(sources)).length <= 8192);
+  const gzip = gzipSync(Buffer.concat(sources)).length;
+  assert.ok(gzip <= 16384, `motion-boot.js + motion.js: ${gzip} B gzip acima do teto de 16 KB`);
+  t.diagnostic(`motion gzip ${gzip} B (meta 12288, teto 16384)${gzip > 12288 ? ' ACIMA DA META' : ''}`);
   for (const file of files) assert.equal(spawnSync(process.execPath, ['--check', join(root, 'site', file)]).status, 0);
 });
 
