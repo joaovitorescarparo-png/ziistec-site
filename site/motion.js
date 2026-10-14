@@ -144,6 +144,7 @@
   const motion = window.ziisMotion;
   if (!track || !motion) return;
   const frames = [...track.children];
+  const section = track.closest('section');
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const pinQuery = matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px) and (min-height: 600px)');
   const P0 = -0.5, P1 = 6, SPAN = P1 - P0;
@@ -156,7 +157,7 @@
     travel: 'cubic-bezier(0.65,0,0.35,1)', exit: 'cubic-bezier(0.4,0,1,1)', linear: 'linear'
   };
   const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
-  let segs, anims = [], extras = [], swaps = [], applied = NaN, built = false, needSync = false, lastP = 0, lastT = 0, fast = false, fastTimer = 0, shown = [-1, -1];
+  let segs, anims = [], extras = [], swaps = [], applied = NaN, built = false, needSync = false, anchored = false, lastP = 0, lastT = 0, fast = false, fastTimer = 0, shown = [-1, -1];
 
   const at = (k, t) => T[k][0] + t * (T[k][1] - T[k][0]);
   const q = (k, s) => frames[k].querySelector(s);
@@ -346,6 +347,15 @@
     seg(chip, 'opacity', at(1, 0.4), at(1, 0.44), '0', '1');
     seg(chip, 'opacity', at(1, 0.8), at(1, 0.86), '1', '0');
     compile();
+    // #como-funciona lands on the pinned story start (p = 0), never on the intro or the pre-roll.
+    const start = Math.ceil(track.getBoundingClientRect().top + scrollY), intro = section.getBoundingClientRect().top + scrollY;
+    // The offset is held by a WAAPI effect (no inline style); scroll-margin moves no layout.
+    const margin = `${intro - start}px`;
+    anims.push(section.animate([{ scrollMarginTop: margin }, { scrollMarginTop: margin }], { duration: 1, fill: 'both' }));
+    // A first load at #como-funciona may already be scrolling to the intro: send it once to the same
+    // start instead (not on reload or history navigation, which restore their own position).
+    if (!anchored && location.hash === '#' + section.id && performance.getEntriesByType('navigation')[0]?.type === 'navigate' && scrollY <= intro + 2) section.scrollIntoView({ behavior: 'instant' });
+    anchored = true;
     built = true;
     shown = [-1, -1];
     applied = NaN;

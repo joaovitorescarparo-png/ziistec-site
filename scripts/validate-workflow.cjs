@@ -189,13 +189,39 @@ const go = (page, y) => page.evaluate(y => scrollTo(0, y), y);
     log('behaviour', { test: 'resize 1440x900 → 1280x720 mid-T23 = fresh load, FLIP re-measured', ...flip });
     await context.close(); await fresh.context.close();
   }
-  for (const hash of ['#planos', '#como-funciona']) {
-    const { context, page, errors } = await open(browser, { viewport: { width: 1440, height: 900 } }, 8771, hash);
+  {
+    const { context, page, errors } = await open(browser, { viewport: { width: 1440, height: 900 } }, 8771, '#planos');
     const s = await page.evaluate(STATE);
     assert.deepEqual(errors, []);
     assert.equal(s.carriers.filter(c => c[0] > 0).length, 0);
-    log('behaviour', { test: `anchor ${hash}`, devices: s.devices });
+    log('behaviour', { test: 'anchor #planos', devices: s.devices });
     await context.close();
+  }
+  // #como-funciona lands on the pinned story start (p = 0, pre-roll complete) from a load and from the
+  // header link (smooth scroll); unpinned it stays the native anchor of the approved static page.
+  const START = () => {
+    const t = document.querySelector('[data-flow-track]'), d = t.children[0].querySelector('.flow-devices'), s = getComputedStyle(d);
+    return { p: +((scrollY - (t.getBoundingClientRect().top + scrollY)) / t.children[0].offsetHeight).toFixed(4), frameTop: +t.children[0].getBoundingClientRect().top.toFixed(1), devices: [+s.opacity, s.translate] };
+  };
+  for (const [width, height] of PINNED) {
+    const { context, page, errors } = await open(browser, { viewport: { width, height } }, 8771, '#como-funciona');
+    const load = await page.evaluate(START);
+    await go(page, 0); await page.waitForTimeout(300);
+    await page.evaluate(() => { document.documentElement.style.scrollBehavior = ''; });
+    await page.click('.mk-nav-links a[href="#como-funciona"]'); await page.waitForTimeout(2500);
+    const link = await page.evaluate(START);
+    for (const s of [load, link]) assert.ok(Math.abs(s.p) < 0.002 && Math.abs(s.frameTop) < 1 && s.devices[0] === 1 && ['none', '0px', '0px 0px'].includes(s.devices[1]), `#como-funciona ${width}x${height}: ${JSON.stringify(s)}`);
+    assert.deepEqual(errors, []);
+    log('behaviour', { test: 'anchor #como-funciona → pinned story start', viewport: `${width}x${height}`, load, link });
+    await context.close();
+  }
+  for (const [name, options] of [['coarse pointer 1280x800', { viewport: { width: 1280, height: 800 }, hasTouch: true }], ['tablet 768x1024', { viewport: { width: 768, height: 1024 }, hasTouch: true, isMobile: true }], ['reduced motion 1440x900', { viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' }]]) {
+    const c = await open(browser, options, 8771, '#como-funciona'), b = await open(browser, options, 8770, '#como-funciona');
+    const y = [await c.page.evaluate(() => scrollY), await b.page.evaluate(() => scrollY)];
+    assert.equal(y[0], y[1], `${name}: native #como-funciona`);
+    assert.deepEqual(c.errors, []);
+    log('behaviour', { test: `anchor #como-funciona native, ${name}`, scrollY: y[0] });
+    await c.context.close(); await b.context.close();
   }
   {
     const { context, page, errors } = await open(browser, { viewport: { width: 1440, height: 900 } });
