@@ -16,7 +16,9 @@ unchanged (F2 hashes).
 - F1: while pinned, 761–899 px tall (≥ 1280) and 761–767 px tall (1024–1279) use
   the approved short-height values; ≥ 900 / ≥ 768 tall centre the approved frame.
 - One passive scroll listener → one `requestAnimationFrame` → seek of paused,
-  finite WAAPI effects (one per element and property). Only `opacity`,
+  finite WAAPI effects (one per element and property). Since the M10 hardening
+  the listener and the frame are shared with M05: each job reads, then all jobs
+  write, in the same tick. Only `opacity`,
   `translate` and `scale`; no layout property, no library, no wheel/touch handling.
 - Fast scroll (> 3 stage heights/s) cuts to the nearest dwell, then resumes.
 
@@ -26,8 +28,8 @@ unchanged (F2 hashes).
 |---|---|
 | M07 | Step count, title, description and footer step leave t 0.10–0.35 (−12px) and enter t 0.40–0.70 (+12px); numeral rolls t 0.30–0.40 / 0.40–0.50 |
 | M08 | Continuous fill and OS #0248 token on all rails; stops switch at each midpoint (160 ms); place chip crossfades 240 ms when its words change |
-| M09 · T12 | Approval pill at D1 0.30–0.45; quote leaves; ORC-0218 header flies (t 0.20–0.60) into "Origem · ORC-0218 aprovado"; OS header, fields and toast enter; crumb and nav indicator move |
-| M10 · T23 | OS screen leaves; "OS #0248" flies into the 14:00 slot (t 0.00–0.30); agenda takes over; both windows recede 1 → 0.88 (t 0.20–0.55); phone enters (t 0.30–0.85); "OS #0248 · Atribuída" chip arcs from the slot to the phone head (t 0.40–0.80); phone head and body fill (t 0.78–1.00); place becomes "No campo · técnico" at t 0.50. No R$ enters the phone or any carrier |
+| M09 · T12 | Approval pill at D1 0.30–0.45; quote leaves; ORC-0218 header flies (t 0.20–0.60) into "Origem · ORC-0218 aprovado"; OS header, fields and toast enter; nav indicator moves; crumb crossfades t 0.30–0.60 |
+| M10 · T23 | OS screen leaves; "OS #0248" flies into the 14:00 slot (t 0.00–0.30); agenda takes over; both windows recede 1 → 0.88 (t 0.20–0.55); phone enters (t 0.30–0.85); "OS #0248 · Atribuída" chip arcs from the slot to the phone head (t 0.40–0.80); phone head and body fill (t 0.78–1.05, body 0.04 apart); crumb crossfades t 0.30–0.60; place becomes "No campo · técnico" at t 0.50. No R$ enters the phone or any carrier |
 
 During T12 and T23 the incoming frame lies over the outgoing one (`mo-over` /
 `mo-under`); identical chrome is not drawn twice. Carriers, the nav indicator
@@ -64,6 +66,65 @@ and the crumb text wrapper are runtime, `aria-hidden` DOM only.
   frozen 8 KB budget. Runtime budget amendment 2 below replaces that budget.
 - The numeral roll has no clipping box (no inner wrapper in the frozen markup).
 - Real-device frame pacing (laptops, Safari, trackpads) is still manual.
+
+## M10 hardening
+
+After `98bf716`, without changing the T12/T23 concepts, the dwells, the Hero,
+fonts, static layout or M11–M21:
+
+- **Scheduler.** M05 and the workflow share one passive scroll listener and at
+  most one pending `requestAnimationFrame`; reads run before writes. Gate:
+  `check.mjs` fails on a second scroll listener, `requestAnimationFrame(` or
+  `cancelAnimationFrame(` (two mutation tests); `validate-workflow.cjs` counts
+  listeners and pending frames at runtime. Rendered state, sampled every 0.05
+  stage heights at four viewports plus the M05 exit, is unchanged.
+- **Crumb.** Outgoing and incoming crumbs crossfade over t 0.30–0.60 with the
+  same symmetric curve; their effective opacities sum to 1, so the crumb is never
+  empty (it was at t 0.45). At t 0.45 both read at 50%.
+- **T23 chip.** No fixed width. The chip flies inside an `aria-hidden` clone of
+  the frame-03 phone with everything but the head hidden, so the head keeps its
+  own layout. Title, slot, slot pill and phone head are measured in the DOM with
+  every effect seeked to the instant each leg starts or lands. At `f11e7f8` the
+  chip started 9.8–13.2 px off the slot pill and was 8.6–11.7 px wider than the
+  head; now both match to < 0.01 px.
+- **Stagger.** Phone body 0.04 apart (blueprint); the last item ends at t 1.05.
+- **Anchor.** With the pin eligible, `#como-funciona` lands at p = 0 (pre-roll
+  complete), from a load or a link, via a `scroll-margin-top` held by a WAAPI
+  effect (no inline style). Touch, tablet and reduced motion keep the native
+  anchor of `0c6b4ff`.
+- **Late webfonts.** Found during this round: with webfonts later than the
+  400 ms bound, rail stops were up to 13.6 px off and the chip 3.2 px off. The
+  workflow now re-measures on `loadingdone`.
+
+Evidence at `93d4253` (Chromium headless):
+
+- Dwells 01–06 equal the static frames at 1440×900, 1280×720 and 1024×768
+  (max box delta 0.0125 px, opacity delta 0).
+- Pin entry/sticky/exit, reverse identity, no R$ on the phone or the chip, no
+  R$ 2.420 anywhere in the track, crumb never empty (minimum sum 1.0, minimum
+  max 0.56), T23 FLIP < 0.01 px: 1440×900, 1366×768, 1280×800, 1280×720,
+  1024×768; also after a resize 1440×900 → 1280×720 mid-T23 and with webfonts
+  delayed 1500 ms.
+- Reduced motion, coarse pointer 1280×800 / 1366×1024, tablet 768×1024, no-JS:
+  equal to the baseline; hero matrix 0 raw pixels from `0c6b4ff` for no-JS,
+  reduce, failing and blocked scripts at 7 sizes; hero behaviour 20/20.
+- Scroll 01 → 03 → 01: 0 long tasks, motion CLS 0 (CPU 1× and 4×). Frame pacing
+  in this run is noisier than the M10 record (p95 16.8 ms at 1×, up to 33 ms at
+  4×, max 50–117 ms); the scheduler-only build measured the same way gives the
+  same spread, so it is environment noise, not this round.
+- Load, 7 paired runs against `f11e7f8`: LCP deltas −20…+48 ms; load CLS equal.
+- A rebuild (load, resize, media change, late webfonts) is one long task at
+  CPU 4× (≈ 170 ms, ≈ 125 ms at `f11e7f8`); none at 1×. It never runs while
+  scrolling.
+
+Open against amendment 1 (unchanged by this round, recorded for decision):
+desktop LCP of the hero title is ≈ 1 s with motion vs ≈ 0.2 s at `0c6b4ff`
+(+780–820 ms, the title clip reveal of M02; the mobile guard already removes it
+at 390×844, +24 ms). Total load CLS is 0.033 at 1280×720 and 0.017 at 390×844
+(font swap; `0c6b4ff` 0.047 and 0.020), above 0.01; elsewhere 0.002–0.005.
+
+`motion-boot.js` + `motion.js` after the hardening: 8,602 B gzip (target
+12 KB, ceiling 16 KB).
 
 ## Runtime budget amendment 2 (approved)
 
