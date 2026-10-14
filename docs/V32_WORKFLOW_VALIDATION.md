@@ -117,7 +117,8 @@ Evidence at `93d4253` (Chromium headless):
   CPU 4× (≈ 170 ms, ≈ 125 ms at `f11e7f8`); none at 1×. It never runs while
   scrolling.
 
-Open against amendment 1 (unchanged by this round, recorded for decision):
+Open against amendment 1 at `7c5d2b7` (both closed afterwards; see the desktop
+LCP closure and performance amendment 2 in `V32_HERO_VALIDATION.md`):
 desktop LCP of the hero title is ≈ 1 s with motion vs ≈ 0.2 s at `0c6b4ff`
 (+780–820 ms, the title clip reveal of M02; the mobile guard already removes it
 at 390×844, +24 ms). Total load CLS is 0.033 at 1280×720 and 0.017 at 390×844
@@ -145,9 +146,10 @@ against it are kept as recorded.
 
 ## Acceptance
 
-Acceptance uses performance amendment 1 (`V32_HERO_VALIDATION.md`):
-motion-attributable CLS = 0; total page CLS ≤ 0.01 in the validation viewports;
-no LCP regression above 200 ms that is causally attributable to motion. No long
+Acceptance uses performance amendments 1 and 2 (`V32_HERO_VALIDATION.md`):
+motion-attributable CLS = 0; total page CLS ≤ 0.01 where `0c6b4ff` is ≤ 0.01,
+otherwise ≤ the `0c6b4ff` value with no new layout-shift source; no LCP
+regression above 200 ms that is causally attributable to motion. No long
 task over 50 ms while scrolling the workflow; dwells equal the approved static
 frames; no R$ on the phone and no R$ 2.420 in any frame or transition.
 

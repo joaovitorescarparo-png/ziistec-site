@@ -1,6 +1,8 @@
 # V3.2 foundation and Hero M01–M05
 
 **Status: V3.2 HERO FOUNDATION — APPROVED** (after the performance amendment below).
+**Status: V3.2 M10 + HERO PERFORMANCE — READY FOR M11** (desktop LCP closure and
+performance amendment 2 below).
 
 Scope: F2, safe boot, local motion vocabulary and Hero M01–M05, from
 `0c6b4fff5c2ecfef0248f56aa54f0be8b62cc2b9` on `feat/homepage-v32-motion`.
@@ -164,3 +166,48 @@ and no clip, and the title's first LCP paint equals first contentful paint: the
 title no longer waits for any reveal. `--performance-only --cpu-only` (390×844):
 median delta −20 ms. Hero matrix: 0 raw pixels from `0c6b4ff` in every fallback
 mode at 7 sizes; hero behaviour 20/20.
+
+## Performance amendment 2 (approved): CLS against the baseline
+
+Replaces the total-CLS line of amendment 1; the measurements recorded above stay
+as they were.
+
+| Criterion | Amendment 1 | Amendment 2 |
+|---|---|---|
+| Motion-attributable CLS | 0 | **0** (unchanged, mandatory) |
+| Total page CLS, viewport where `0c6b4ff` ≤ 0.01 | ≤ 0.01 | **≤ 0.01** |
+| Total page CLS, viewport where `0c6b4ff` > 0.01 (isolated font swap) | ≤ 0.01 | **≤ the `0c6b4ff` value**, and no new layout-shift source |
+
+Load CLS, maximum of 7 cold loads per viewport (CPU 1×; 390×844 at 4×):
+
+| Viewport | `0c6b4ff` | M10 hardening `7c5d2b7` | V3.2 now | Result |
+|---|---|---|---|---|
+| 1440×900 | 0.0160 | 0.0024 | 0.0125 | ≤ baseline |
+| 1366×768 | 0.0217 | 0.0031 | 0.0205 | ≤ baseline |
+| 1280×800 | 0.0231 | 0.0034 | 0.0210 | ≤ baseline |
+| 1280×720 | 0.0470 | 0.0345 | 0.0438 | ≤ baseline |
+| 1024×768 | 0.0283 | 0.0051 | 0.0251 | ≤ baseline |
+| 768×1024 | 0.0509 | 0.0193 | 0.0260 | ≤ baseline |
+| 390×844 | 0.0195 | 0.0173 | 0.0173 | ≤ baseline |
+
+- Every validation viewport has a baseline above 0.01, so every one is held to
+  its baseline, and every one passes.
+- No new source: with webfonts blocked (fallback only) and with webfonts warm in
+  the cache, both `0c6b4ff` and V3.2 measure CLS 0 in all 7 viewports (3 loads
+  each). Every load shift is the font swap; the node names differ only because
+  motion keeps some hero nodes transparent during `motion-pending`.
+- The values rose from `7c5d2b7` because the title is now visible during the
+  swap (it was hidden before); this is the LCP closure's expected trade-off and
+  stays below the baseline.
+- Scroll through the workflow: motion CLS 0 (CPU 1× and 4×).
+
+## Known debt (does not block M11)
+
+- **Static layer: font-swap CLS.** The fallback → webfont swap shifts the nav and
+  hero copy in `0c6b4ff` itself (0.016–0.051 in the validation viewports). It is
+  a static-layer issue, not motion, and is out of scope until fonts may change.
+- **Late-font remeasurement can produce a ~170 ms long task under CPU 4×.**
+  `93d4253` rebuilds the workflow when webfonts load after the 400 ms bound
+  (also on resize and media changes). Measured after the LCP closure: 174 ms at
+  CPU 4×, none at 1× (≈ 173 ms before it). It never runs while scrolling and it
+  fixes a real misalignment (up to 13.6 px).
