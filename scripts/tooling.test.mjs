@@ -247,6 +247,8 @@ const regressions = [
   ['F2 static frame data', 'check.mjs', /F2 static frames/, (d) => edit(d, 'site/index.html', (s) => s.replace('Bloco B · Apto 702','Bloco C · Apto 702'))],
   ['M06 pin fora de R2', 'check.mjs', /M06 pin: layout/, (d) => edit(d, 'site/v4/03-motion.css', (s) => s.replace(/\(hover: hover\) and \(pointer: fine\) and (\(min-width: 1024px\) and \(min-height: 600px\) and \(prefers-reduced-motion: no-preference\) \{\r?\n  html\.motion \.flow-track)/, '$1'))],
   ['M06 runway math', 'check.mjs', /M06 pin: --mo-pin-scroll/, (d) => edit(d, 'site/v4/03-motion.css', (s) => s.replace('--mo-pin-scroll:600svh', '--mo-pin-scroll:500svh'))],
+  ['M10 scheduler de scroll concorrente', 'check.mjs', /M10 scheduler/, (d) => edit(d, 'site/motion.js', (s) => s + "\naddEventListener('scroll', () => requestAnimationFrame(() => {}), { passive: true });\n")],
+  ['M10 segundo requestAnimationFrame', 'check.mjs', /M10 scheduler/, (d) => edit(d, 'site/motion.js', (s) => s + "\naddEventListener('resize', () => requestAnimationFrame(() => {}));\n")],
   ['M06 elegibilidade JS', 'check.mjs', /M06 pin: elegibilidade/, (d) => edit(d, 'site/motion.js', (s) => s.replaceAll("matchMedia('(hover: hover) and (pointer: fine)", "matchMedia('(any-pointer: fine)"))],
   ['CTA WhatsApp sem nova aba', 'check.mjs', /nova aba/, (d) => edit(d, 'site/index.html', (s) => s.replace('target="_blank"', 'target="_self"'))],
   // invariantes da Homepage V3.1

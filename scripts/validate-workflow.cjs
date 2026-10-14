@@ -97,6 +97,34 @@ const go = (page, y) => page.evaluate(y => scrollTo(0, y), y);
     log('behaviour', { test: 'entry/sticky/exit + reverse + no R$ on phone', viewport: `${width}x${height}`, tops });
     await context.close();
   }
+  // 2b. One scroll scheduler for M05 + workflow: one passive scroll listener, never two pending frames.
+  for (const [width, height] of [[1440, 900], [1280, 720]]) {
+    const context = await browser.newContext({ viewport: { width, height } });
+    const page = await context.newPage();
+    await page.addInitScript(() => {
+      const s = window.scheduler = { listeners: 0, passive: true, pending: 0, maxPending: 0, ticks: 0 };
+      const add = EventTarget.prototype.addEventListener;
+      EventTarget.prototype.addEventListener = function (type, fn, options) {
+        if (type === 'scroll' && (this === window || this === document)) { s.listeners++; s.passive = s.passive && !!(options && options.passive); }
+        return add.call(this, type, fn, options);
+      };
+      const raf = window.requestAnimationFrame.bind(window);
+      window.requestAnimationFrame = callback => { s.pending++; s.maxPending = Math.max(s.maxPending, s.pending); return raf(t => { s.pending--; s.ticks++; callback(t); }); };
+    });
+    await page.goto('http://127.0.0.1:8771/'); await page.waitForTimeout(1300);
+    const top = await page.evaluate(() => { document.documentElement.style.scrollBehavior = 'auto'; return document.querySelector('[data-flow-track]').getBoundingClientRect().top + scrollY; });
+    await page.mouse.move(width / 2, height / 2);
+    // The hero exit (M05) and the whole workflow (M06–M10), wheel-driven, then back.
+    for (let y = 0; y < top + 3 * height; y += 90) { await page.mouse.wheel(0, 90); await page.waitForTimeout(12); }
+    for (let y = 0; y < top + 3 * height; y += 90) { await page.mouse.wheel(0, -90); await page.waitForTimeout(12); }
+    await page.waitForTimeout(300);
+    const s = await page.evaluate(() => window.scheduler);
+    assert.equal(s.listeners, 1, 'one scroll listener');
+    assert.ok(s.passive, 'scroll listener is passive');
+    assert.equal(s.maxPending, 1, 'at most one pending requestAnimationFrame');
+    log('behaviour', { test: 'single scroll scheduler (M05 + workflow)', viewport: `${width}x${height}`, ...s });
+    await context.close();
+  }
   // 3. Resize mid-T23 equals a fresh load; anchors; fast-scroll cut.
   {
     const { context, page, errors } = await open(browser, { viewport: { width: 1440, height: 900 } });

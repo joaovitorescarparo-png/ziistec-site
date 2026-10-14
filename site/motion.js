@@ -4,12 +4,21 @@
   if (!home) return;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const pinQuery = matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px) and (min-height: 600px)');
-  // R2 eligibility only. No pin, F1 composition or 700svh track is activated yet.
-  window.ziisMotion = { isPinEligible: () => pinQuery.matches && !reduced.matches };
+  // The only scroll scheduler for all motion (M05 + workflow): one passive scroll listener and at
+  // most one pending requestAnimationFrame. Each job reads layout and returns its writes; in a tick
+  // every read runs before any write.
+  const jobs = [];
+  let frame = 0;
+  function tick() {
+    frame = 0;
+    for (const write of jobs.map(read => read())) if (write) write();
+  }
+  const schedule = () => { if (!frame) frame = requestAnimationFrame(tick); };
+  addEventListener('scroll', schedule, { passive: true });
+  window.ziisMotion = { isPinEligible: () => pinQuery.matches && !reduced.matches, schedule, job: read => jobs.push(read) };
   const stage = document.querySelector('.mk-hero-stage');
   const entrances = new Set();
   const quiet = new Map();
-  let frame = 0;
   const clamp = value => Math.max(0, Math.min(1, value));
 
   function clearQuiet() {
@@ -22,20 +31,15 @@
     document.querySelector('.hero-win .ov-row.is-hi')?.removeAttribute('data-motion-tint');
     root.classList.remove('motion-pending');
   }
-  function updateQuiet() {
-    frame = 0;
-    if (reduced.matches || !root.classList.contains('motion') || innerWidth < 640) {
-      clearQuiet();
-      return;
-    }
-    // M05: the last 40% exits across the viewport's top edge. Reads precede writes.
+  function readQuiet() {
+    if (reduced.matches || !root.classList.contains('motion') || innerWidth < 640) return clearQuiet;
+    // M05: the last 40% exits across the viewport's top edge.
     const box = stage.getBoundingClientRect();
     const progress = clamp(1 - box.bottom / (box.height * 0.4));
     // No effect remains at the static endpoint: even text rasterization matches 0c6b4ff.
-    if (progress === 0) {
-      clearQuiet();
-      return;
-    }
+    return progress === 0 ? clearQuiet : () => writeQuiet(progress);
+  }
+  function writeQuiet(progress) {
     for (const element of stage.querySelectorAll('.hero-toast, .hero-where')) {
       if ([...entrances].some(a => a.effect.target === element)) continue;
       let animation = quiet.get(element);
@@ -47,18 +51,15 @@
       animation.currentTime = progress;
     }
   }
-  function scheduleQuiet() {
-    if (!frame) frame = requestAnimationFrame(updateQuiet);
-  }
-  addEventListener('scroll', scheduleQuiet, { passive: true });
-  addEventListener('resize', () => { settle(); scheduleQuiet(); }, { passive: true });
-  addEventListener('pageshow', event => { if (event.persisted) { settle(); scheduleQuiet(); } });
+  jobs.push(readQuiet);
+  addEventListener('resize', () => { settle(); schedule(); }, { passive: true });
+  addEventListener('pageshow', event => { if (event.persisted) { settle(); schedule(); } });
   reduced.addEventListener('change', event => {
     settle();
     clearQuiet();
     if (event.matches) root.classList.remove('motion');
     else root.classList.add('motion');
-    scheduleQuiet();
+    schedule();
   });
 
   async function startHero() {
@@ -69,7 +70,7 @@
     if (!canEnter || reduced.matches || !root.classList.contains('motion') || scrollY >= 100 || location.hash || navigation?.type === 'back_forward') {
       settle();
       clearTimeout(window.ziisMotionBoot?.timer);
-      scheduleQuiet();
+      schedule();
       return;
     }
     // Remove pending synchronously to measure FINAL boxes, before any animation writes.
@@ -115,7 +116,7 @@
     for (const item of timeline) {
       const animation = item.element.animate([item.from, item.to], { delay: item.delay, duration: item.duration, easing: item.easing, fill: 'both' });
       entrances.add(animation);
-      animation.finished.then(() => { animation.cancel(); entrances.delete(animation); scheduleQuiet(); }, () => { /* Expected cancellation on reduced motion / resize. */ });
+      animation.finished.then(() => { animation.cancel(); entrances.delete(animation); schedule(); }, () => { /* Expected cancellation on reduced motion / resize. */ });
     }
     if (tintVisible) {
       tint.setAttribute('data-motion-tint', '');
@@ -124,7 +125,7 @@
       animation.finished.then(() => { animation.cancel(); entrances.delete(animation); tint.removeAttribute('data-motion-tint'); }, () => { /* Expected cancellation. */ });
     }
     clearTimeout(window.ziisMotionBoot?.timer);
-    scheduleQuiet();
+    schedule();
   }
   // Initialization has started; the remaining fonts wait is bounded at 400ms and caught.
   clearTimeout(window.ziisMotionBoot?.timer);
@@ -140,7 +141,8 @@
   // 600svh) and seeks paused, finite WAAPI effects. Every effect ends on the approved static frame.
   const root = document.documentElement;
   const track = window.IntersectionObserver && document.querySelector('[data-flow-track]');
-  if (!track) return;
+  const motion = window.ziisMotion;
+  if (!track || !motion) return;
   const frames = [...track.children];
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const pinQuery = matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px) and (min-height: 600px)');
@@ -164,7 +166,7 @@
   };
   const travel = bez(0.65, 0, 0.35, 1);
   const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
-  let segs, anims = [], extras = [], swaps = [], applied = NaN, built = false, frame = 0, lastP = 0, lastT = 0, fast = false, fastTimer = 0, shown = [-1, -1];
+  let segs, anims = [], extras = [], swaps = [], applied = NaN, built = false, needSync = false, lastP = 0, lastT = 0, fast = false, fastTimer = 0, shown = [-1, -1];
 
   const at = (k, t) => T[k][0] + t * (T[k][1] - T[k][0]);
   const q = (k, s) => frames[k].querySelector(s);
@@ -346,7 +348,7 @@
     applied = NaN;
     lastP = clamp(progress(), P0, P1 + 1);
     lastT = performance.now();
-    update();
+    update(lastP, lastT);
   }
   function teardown() {
     if (!built) return;
@@ -376,18 +378,22 @@
     });
     if (old < 0) els.forEach((el, i) => { if (i !== n) swaps.push(el.animate([{ opacity: 0 }, { opacity: 0 }], { duration: 0, fill: 'forwards' })); });
   }
-  function update() {
-    frame = 0;
+  // Read phase of the shared tick: a pending rebuild (resize, media change, fonts) measures and
+  // writes on its own; otherwise only the scroll position is read here.
+  function read() {
+    if (needSync) { needSync = false; return sync; }
     if (!built) return;
-    const now = performance.now();
-    const raw = clamp(progress(), P0, P1 + 1);
+    const raw = clamp(progress(), P0, P1 + 1), now = performance.now();
+    return () => update(raw, now);
+  }
+  function update(raw, now) {
     // Fast scroll (> 3 stage heights per second): cut to the nearest dwell until it slows down.
     const speed = Math.abs(raw - lastP) / Math.max(16, now - lastT) * 1000;
     lastP = raw; lastT = now;
     if (speed > 3 && raw > 0 && raw < P1) {
       fast = true;
       clearTimeout(fastTimer);
-      fastTimer = setTimeout(() => { fast = false; schedule(); }, 140);
+      fastTimer = setTimeout(() => { fast = false; motion.schedule(); }, 140);
     }
     const p = fast ? DWELL.reduce((b, d) => Math.abs(d - raw) < Math.abs(b - raw) ? d : b) : raw;
     const time = (clamp(p, P0, P1) - P0) * 1000;
@@ -403,15 +409,14 @@
       f.classList.toggle('mo-under', !!(u && u[2] && p > u[0] && p < u[1]));
     });
   }
-  function schedule() { if (!frame) frame = requestAnimationFrame(update); }
   function sync() {
     if (eligible()) build(); else teardown();
   }
-  addEventListener('scroll', schedule, { passive: true });
-  let resizing = 0;
-  addEventListener('resize', () => { cancelAnimationFrame(resizing); resizing = requestAnimationFrame(sync); }, { passive: true });
-  pinQuery.addEventListener('change', sync);
-  reduced.addEventListener('change', () => requestAnimationFrame(sync));
+  const resync = () => { needSync = true; motion.schedule(); };
+  motion.job(read);
+  addEventListener('resize', resync, { passive: true });
+  pinQuery.addEventListener('change', resync);
+  reduced.addEventListener('change', resync);
 
   // Touch / coarse pointer (and short or narrow-desktop windows): no pin; each frame's devices
   // enter once in view. Frames already on screen or above it are shown as they are.
@@ -425,5 +430,5 @@
   }, { rootMargin: '0px 0px 25% 0px' });
   if (!eligible()) frames.forEach(f => io.observe(f.querySelector('.flow-devices')));
   // Fonts change text metrics; measure once they are settled (bounded).
-  Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 400))]).then(sync);
+  Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 400))]).then(resync);
 })();

@@ -252,6 +252,11 @@ if(/position:\s?sticky/.test(motionCss)){
   if(!pinRule||!pinRule[1].includes(pinQuery)||!pinRule[1].includes('(prefers-reduced-motion: no-preference)')||!pinRule[0].includes('var(--mo-pin-track)')) throw new Error('M06 pin: layout fora de R2/safety floor ou sem track de 700svh');
   if(!motionJs.includes(`matchMedia('${pinQuery}')`)) throw new Error('M06 pin: elegibilidade JS diverge de R2');
 }
+// M10 hardening: one scroll scheduler for all motion (M05 + workflow), never concurrent ones.
+{
+  const count=re=>(motionJs.match(re)||[]).length;
+  if(count(/addEventListener\(\s*['"]scroll['"]/g)>1||/\bonscroll\b/.test(motionJs)||count(/\brequestAnimationFrame\(/g)>1||/\bcancelAnimationFrame\(/.test(motionJs)) throw new Error('M10 scheduler: motion.js precisa de um único listener de scroll e um único requestAnimationFrame');
+}
 // F2.6: approved CSS and markup are immutable, apart from the two external scripts.
 const normalizedHash=source=>sha256(Buffer.from(source.replace(/\r\n/g,'\n')));
 if(normalizedHash(await read('site/v4/01-tokens.css'))!=='61e4a5bdf990eec0adf38acb14253d3e2e59dd59743b5aa98c2b31141e6487b8' || normalizedHash(await read('site/v4/02-home.css'))!=='9ffee1bfe508f2de710c41b4631c09dd8df358842bdfe140b3ee3033df10c159') throw new Error('F2 static CSS changed');
