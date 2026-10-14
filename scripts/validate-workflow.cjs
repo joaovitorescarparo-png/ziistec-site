@@ -35,6 +35,30 @@ const STATE = () => {
   const at = el => { const r = el.getBoundingClientRect(); return [+eff(el).toFixed(3), Math.round(r.x), Math.round(r.y)]; };
   return { devices: [...t.children].map(f => +eff(f.querySelector('.flow-devices')).toFixed(3)), carriers: [...t.querySelectorAll('.mo-carrier')].map(at), phone: at(t.children[2].querySelector('.fd-phone')), classes: [...t.children].map(f => f.className) };
 };
+// Crumbs on screen (effective opacity, visibility included): during T12/T23 they crossfade and are never empty.
+const CRUMB = () => {
+  const t = document.querySelector('[data-flow-track]');
+  const eff = el => { let v = getComputedStyle(el).visibility === 'visible' ? 1 : 0; for (let e = el; e && e !== t; e = e.parentElement) v *= +getComputedStyle(e).opacity; return v; };
+  const o = [...t.querySelectorAll('.app-crumb .mo-crumb')].filter(c => !c.closest('.mo-carrier')).map(eff);
+  return { sum: o.reduce((a, b) => a + b, 0), max: Math.max(...o) };
+};
+// T23 FLIP: every effect is seeked to the exact instant each carrier leg starts or lands, and the carrier
+// is compared with the real DOM element it stands for (boxes in CSS px).
+const FLIP = () => {
+  const t = document.querySelector('[data-flow-track]'), f = [...t.children];
+  const timeline = document.getAnimations().filter(a => a.effect.getTiming().duration === 6500);
+  const seek = k => { for (const a of timeline) a.currentTime = (1.55 + k * 0.95 + 0.5) * 1000; };
+  const b = el => el.getBoundingClientRect();
+  const d = (x, y) => Math.max(Math.abs(x.x - y.x), Math.abs(x.y - y.y), Math.abs(x.height - y.height));
+  const title = t.querySelector('.mo-carrier.scr-title'), shell = t.querySelector('.mo-carrier.mo-shell');
+  const out = {};
+  seek(0); out.titleStart = d(b(title), b(f[1].querySelector('.scr-title')));
+  seek(0.3); out.titleSlot = d(b(title), b(f[2].querySelector('.ag-slot.is-focus .ag-what b')));
+  seek(0.4); out.chipStart = d(b(shell.querySelector('.ph-head .ui-pill')), b(f[2].querySelector('.ag-slot.is-focus .ui-pill')));
+  seek(0.8); out.chipLand = d(b(shell.querySelector('.ph-head')), b(f[2].querySelector('.ph-head')));
+  out.chipWidth = Math.abs(b(shell.querySelector('.ph-head')).width - b(f[2].querySelector('.ph-head')).width);
+  return out;
+};
 async function open(browser, options, port = 8771, hash = '') {
   const context = await browser.newContext(options);
   const page = await context.newPage();
@@ -91,10 +115,33 @@ const go = (page, y) => page.evaluate(y => scrollTo(0, y), y);
     await go(page, g.top + 3.2 * height); await page.waitForTimeout(220);
     for (const p of [2.3, 2.1, 1.9, 1.0, 0.8]) { await go(page, g.top + p * height); await page.waitForTimeout(220); back[p] = await page.evaluate(STATE); }
     for (const p of Object.keys(forward)) assert.deepEqual(back[p], forward[p], `reverse at p = ${p}`);
-    // No value ever reaches the technician phone (frame 03), including carriers at any T23 instant.
-    for (const p of [1.6, 1.8, 2.0, 2.2, 2.4, 2.6]) { await go(page, g.top + p * height); await page.waitForTimeout(150); assert.equal(await page.evaluate(() => /R\$/.test([...document.querySelectorAll('[data-flow-track] .ph, [data-flow-track] .mo-carrier.ph-head')].map(e => e.textContent).join(' '))), false); }
+    // No value ever reaches the technician phone (frame 03), including the chip at any T23 instant, and
+    // R$ 2.420 appears nowhere in the track at any instant.
+    for (const p of [1.6, 1.8, 2.0, 2.2, 2.4, 2.6]) {
+      await go(page, g.top + p * height); await page.waitForTimeout(150);
+      assert.equal(await page.evaluate(() => /R\$/.test([...document.querySelectorAll('[data-flow-track] .ph, [data-flow-track] .mo-carrier.mo-shell')].map(e => e.textContent).join(' '))), false);
+      assert.equal(await page.evaluate(() => /R\$\s?2\.420/.test(document.querySelector('[data-flow-track]').textContent)), false);
+    }
+    // Crumb crossfade through T12 and T23 (slow scroll, under the fast-scroll threshold).
+    let crumb = { minSum: 2, max: 1 };
+    await go(page, g.top + 0.4 * height); await page.waitForTimeout(250);
+    for (let p = 0.45; p <= 2.55; p += 0.02) {
+      await go(page, g.top + p * height); await page.waitForTimeout(40);
+      const c = await page.evaluate(CRUMB);
+      crumb = { minSum: Math.min(crumb.minSum, c.sum), max: Math.min(crumb.max, c.max) };
+    }
+    assert.ok(crumb.minSum > 0.98 && crumb.max >= 0.5, `crumb never empty: ${JSON.stringify(crumb)}`);
     assert.deepEqual(errors, []);
-    log('behaviour', { test: 'entry/sticky/exit + reverse + no R$ on phone', viewport: `${width}x${height}`, tops });
+    log('behaviour', { test: 'entry/sticky/exit + reverse + no R$ on phone + crumb never empty', viewport: `${width}x${height}`, tops, crumbMinSum: +crumb.minSum.toFixed(3), crumbMinMax: +crumb.max.toFixed(3) });
+    await context.close();
+  }
+  // 2a. T23 FLIP: carriers start on and land on the real DOM elements (no fixed widths).
+  for (const [width, height] of PINNED) {
+    const { context, page, errors } = await open(browser, { viewport: { width, height } });
+    const flip = await page.evaluate(FLIP);
+    assert.ok(Object.values(flip).every(v => v < 0.5), `T23 FLIP ${width}x${height}: ${JSON.stringify(flip)}`);
+    assert.deepEqual(errors, []);
+    log('behaviour', { test: 'T23 FLIP measured on the DOM', viewport: `${width}x${height}`, ...flip });
     await context.close();
   }
   // 2b. One scroll scheduler for M05 + workflow: one passive scroll listener, never two pending frames.
@@ -136,8 +183,10 @@ const go = (page, y) => page.evaluate(y => scrollTo(0, y), y);
     const fresh = await open(browser, { viewport: { width: 1280, height: 720 } });
     const f = await fresh.page.evaluate(GEOMETRY); await go(fresh.page, f.top + 2.05 * 720); await fresh.page.waitForTimeout(300);
     assert.deepEqual(resized, await fresh.page.evaluate(STATE));
+    const flip = await page.evaluate(FLIP);
+    assert.ok(Object.values(flip).every(v => v < 0.5), `T23 FLIP after resize: ${JSON.stringify(flip)}`);
     assert.deepEqual([...errors, ...fresh.errors], []);
-    log('behaviour', { test: 'resize 1440x900 → 1280x720 mid-T23 = fresh load' });
+    log('behaviour', { test: 'resize 1440x900 → 1280x720 mid-T23 = fresh load, FLIP re-measured', ...flip });
     await context.close(); await fresh.context.close();
   }
   for (const hash of ['#planos', '#como-funciona']) {

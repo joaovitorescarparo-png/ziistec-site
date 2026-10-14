@@ -155,16 +155,6 @@
     standard: 'cubic-bezier(0.2,0,0,1)', emphasis: 'cubic-bezier(0.16,1,0.3,1)',
     travel: 'cubic-bezier(0.65,0,0.35,1)', exit: 'cubic-bezier(0.4,0,1,1)', linear: 'linear'
   };
-  const bez = (x1, y1, x2, y2) => t => {
-    let lo = 0, hi = 1, u = t;
-    for (let i = 0; i < 24; i++) {
-      const x = 3 * x1 * u * (1 - u) ** 2 + 3 * x2 * u * u * (1 - u) + u ** 3;
-      if (x < t) lo = u; else hi = u;
-      u = (lo + hi) / 2;
-    }
-    return 3 * y1 * u * (1 - u) ** 2 + 3 * y2 * u * u * (1 - u) + u ** 3;
-  };
-  const travel = bez(0.65, 0, 0.35, 1);
   const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
   let segs, anims = [], extras = [], swaps = [], applied = NaN, built = false, needSync = false, lastP = 0, lastT = 0, fast = false, fastTimer = 0, shown = [-1, -1];
 
@@ -206,19 +196,21 @@
     }
   }
   // Carrier: a visual clone (aria-hidden) in `holder`, flown through `path` points given in the
-  // holder's local CSS px: [p, {x, y}, height, ease]. Scale follows the requested height.
-  function carrier(src, holder, path, extra) {
+  // holder's local CSS px: [p, {x, y}, height, ease]. Scale follows the requested height. With
+  // `inner`, the path is that element's inside the clone, laid out by its own CSS (measured).
+  function carrier(src, holder, path, extra, inner) {
     const clone = src.cloneNode(true);
     clone.classList.add('mo-carrier');
     if (extra) clone.classList.add(extra);
     clone.setAttribute('aria-hidden', 'true');
     holder.append(clone);
     extras.push(clone);
-    const x0 = clone.offsetLeft, y0 = clone.offsetTop, h0 = clone.offsetHeight;
+    const x0 = clone.offsetLeft, y0 = clone.offsetTop, c = local(box(clone), holder), e = inner ? local(box(clone.querySelector(inner)), holder) : { x: c.x, y: c.y, h: clone.offsetHeight };
+    const at = (r, h) => { const k = h / e.h; return [`${r.x - x0 - k * (e.x - c.x)}px ${r.y - y0 - k * (e.y - c.y)}px`, `${k}`]; };
     for (let i = 1; i < path.length; i++) {
-      const [pa, ra, ha] = path[i - 1], [pb, rb, hb, ease = E.travel] = path[i];
-      seg(clone, 'translate', pa, pb, `${ra.x - x0}px ${ra.y - y0}px`, `${rb.x - x0}px ${rb.y - y0}px`, ease);
-      seg(clone, 'scale', pa, pb, `${ha / h0}`, `${hb / h0}`, ease);
+      const [pa, ra, ha] = path[i - 1], [pb, rb, hb, ease = E.travel] = path[i], a = at(ra, ha), b = at(rb, hb);
+      seg(clone, 'translate', pa, pb, a[0], b[0], ease);
+      seg(clone, 'scale', pa, pb, a[1], b[1], ease);
     }
     return clone;
   }
@@ -242,8 +234,10 @@
       leave(items[0][i], at(k, 0.2), at(k, 0.6), 0, 0, E.travel);
       enter(items[1][i], at(k, 0.2), at(k, 0.6), 0, 0, E.travel);
     }
-    leave(q(k, '.mo-crumb'), at(k, 0.3), at(k, 0.45));
-    enter(q(k + 1, '.mo-crumb'), at(k, 0.45), at(k, 0.6));
+    // Crumb crossfade over t 0.30–0.60: the same symmetric curve out and in, so the two always sum to
+    // 1 and the crumb is never empty.
+    leave(q(k, '.mo-crumb'), at(k, 0.3), at(k, 0.6), 0, 0, E.travel);
+    enter(q(k + 1, '.mo-crumb'), at(k, 0.3), at(k, 0.6), 0, 0, E.travel);
   }
 
   function build() {
@@ -310,12 +304,7 @@
     [...qa(1, '.app-main > .scr-head, .app-main > .scr-sub'), ...qa(1, '.os-field')].forEach((el, i) => leave(el, at(1, 0.02 * i), at(1, 0.08 + 0.02 * i), 0, -8));
     const title = q(1, '.scr-title'), slot = q(2, '.ag-slot.is-focus'), slotName = slot.querySelector('.ag-what b');
     step(title, at(1, 0), '1', '0');
-    // Source measured in the scale-1 window, target in the receded window (0.88): both are local.
-    const w2 = q(2, '.fd-win'), a23 = local(box(title), w2, box(w2).width / w2.offsetWidth / 0.88), b23 = local(box(slotName), w2);
-    const c23 = carrier(title, w2, [[at(1, 0), a23, a23.h], [at(1, 0.3), b23, b23.h]]);
-    step(c23, P0, '0', '0');
-    step(c23, at(1, 0), '0', '1');
-    seg(c23, 'opacity', at(1, 0.3), at(1, 0.36), '1', '0');
+    const w2 = q(2, '.fd-win');
     // Both windows recede together: bottom 1 → 0.88, top (already .fd-win-back) 1/0.88 → 1.
     seg(q(1, '.fd-win'), 'scale', at(1, 0.2), at(1, 0.55), '1', '0.88', E.travel);
     seg(q(2, '.fd-win'), 'scale', at(1, 0.2), at(1, 0.55), `${1 / 0.88}`, '1', E.travel);
@@ -328,20 +317,34 @@
     seg(phone, 'scale', at(1, 0.3), at(1, 0.85), '0.92', '1', E.emphasis);
     const phHead = q(2, '.ph-head');
     enter(phHead, at(1, 0.78), at(1, 0.86));
-    qa(2, '.ph-screen > :not(.ph-notch):not(.ph-head)').forEach((el, i) => enter(el, at(1, 0.8 + 0.03 * i), at(1, 0.85 + 0.03 * i), 0, 8));
-    // The chip starts on the 14:00 slot's pill, where the window is at t = 0.40, and lands on the phone head.
-    const pillBox = box(slot.querySelector('.ui-pill')), win = box(w2);
-    const sAt = 1 / 0.88 + (1 - 1 / 0.88) * travel(clamp((0.4 - 0.2) / 0.35));
-    const slotPill = { x: win.x + (pillBox.x - win.x) * sAt, y: win.y + (pillBox.y - win.y) * sAt, h: pillBox.height * sAt };
-    const head2 = local(box(phHead), dev[2]), chipPill = local(box(phHead.querySelector('.ui-pill')), dev[2]), sp = local(slotPill, dev[2]);
+    qa(2, '.ph-screen > :not(.ph-notch):not(.ph-head)').forEach((el, i) => enter(el, at(1, 0.8 + 0.04 * i), at(1, 0.85 + 0.04 * i), 0, 8));
+    chrome(1);
+    compile();
+    // T23 FLIP: source and target are measured in the DOM at the instant each leg starts and lands,
+    // with every other effect seeked there (window recession and phone entrance included).
+    const seek = k => { for (const a of anims) a.currentTime = (at(1, k) - P0) * 1000; };
+    seek(0);
+    const a23 = local(box(title), w2);
+    seek(0.3);
+    const b23 = local(box(slotName), w2);
+    seek(0.4);
+    const sp = local(box(slot.querySelector('.ui-pill')), dev[2]);
+    seek(0.8);
+    const head2 = local(box(phHead), dev[2]), chipPill = local(box(phHead.querySelector('.ui-pill')), dev[2]);
+    segs = new Map();
+    const c23 = carrier(title, w2, [[at(1, 0), a23, a23.h], [at(1, 0.3), b23, b23.h]]);
+    step(c23, P0, '0', '0');
+    step(c23, at(1, 0), '0', '1');
+    seg(c23, 'opacity', at(1, 0.3), at(1, 0.36), '1', '0');
+    // The chip leaves the 14:00 slot's pill and lands on the phone head. It flies inside a clone of the
+    // phone whose other content is hidden, so the head keeps its own layout (no fixed width).
     const r0 = sp.h / chipPill.h;
     const from = { x: sp.x - (chipPill.x - head2.x) * r0, y: sp.y - (chipPill.y - head2.y) * r0 };
     const over = { x: (from.x + head2.x) / 2, y: (from.y + head2.y) / 2 - 24 };
-    const chip = carrier(phHead, dev[2], [[at(1, 0.4), from, head2.h * r0], [at(1, 0.6), over, head2.h * (r0 + 1) / 2, 'cubic-bezier(0.3,0,0.7,0.6)'], [at(1, 0.8), head2, head2.h, 'cubic-bezier(0.3,0.4,0.35,1)']], 'ph-head');
+    const chip = carrier(phone, dev[2], [[at(1, 0.4), from, head2.h * r0], [at(1, 0.6), over, head2.h * (r0 + 1) / 2, 'cubic-bezier(0.3,0,0.7,0.6)'], [at(1, 0.8), head2, head2.h, 'cubic-bezier(0.3,0.4,0.35,1)']], 'mo-shell', '.ph-head');
     step(chip, P0, '0', '0');
     seg(chip, 'opacity', at(1, 0.4), at(1, 0.44), '0', '1');
     seg(chip, 'opacity', at(1, 0.8), at(1, 0.86), '1', '0');
-    chrome(1);
     compile();
     built = true;
     shown = [-1, -1];
