@@ -189,6 +189,19 @@ const go = (page, y) => page.evaluate(y => scrollTo(0, y), y);
     log('behaviour', { test: 'resize 1440x900 → 1280x720 mid-T23 = fresh load, FLIP re-measured', ...flip });
     await context.close(); await fresh.context.close();
   }
+  // Webfonts arriving after the 400 ms bound: the workflow is re-measured and equals a normal load.
+  {
+    const TOKENS = () => [...document.querySelectorAll('[data-flow-track] .rail-token')].map(e => getComputedStyle(e).translate);
+    const normal = await open(browser, { viewport: { width: 1440, height: 900 } });
+    const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+    await context.route('**/*.woff2', async route => { await new Promise(r => setTimeout(r, 1500)); await route.continue(); });
+    const page = await context.newPage(); await page.goto('http://127.0.0.1:8771/'); await page.waitForTimeout(3200);
+    const late = { tokens: await page.evaluate(TOKENS), flip: await page.evaluate(FLIP) };
+    assert.deepEqual(late.tokens, await normal.page.evaluate(TOKENS), 'late webfonts: rail token stops');
+    assert.ok(Object.values(late.flip).every(v => v < 0.5), `late webfonts: T23 FLIP ${JSON.stringify(late.flip)}`);
+    log('behaviour', { test: 'late webfonts (+1500 ms) re-measured = normal load', ...late.flip });
+    await context.close(); await normal.context.close();
+  }
   {
     const { context, page, errors } = await open(browser, { viewport: { width: 1440, height: 900 } }, 8771, '#planos');
     const s = await page.evaluate(STATE);

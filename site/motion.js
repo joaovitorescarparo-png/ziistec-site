@@ -442,6 +442,8 @@
     }
   }, { rootMargin: '0px 0px 25% 0px' });
   if (!eligible()) frames.forEach(f => io.observe(f.querySelector('.flow-devices')));
-  // Fonts change text metrics; measure once they are settled (bounded).
+  // Fonts change text metrics; measure once they are settled (bounded), and again whenever webfonts
+  // finish loading after that bound, so no measurement keeps fallback metrics.
   Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 400))]).then(resync);
+  document.fonts.addEventListener('loadingdone', resync);
 })();
