@@ -76,6 +76,12 @@ html.motion.motion-pending .mk-hero-title { translate:0 16px; }
   html.motion .flow-frame[data-flow-stage="4"].mo-over .fd-phone:last-child .ph-screen { background:none; box-shadow:none; }
   html.motion .flow-frame[data-flow-stage="4"].mo-over .fd-phone:last-child .ph-notch { visibility:hidden; }
   html.motion .flow-frame .ph-head .ui-pill { transform-origin:0 50%; }
+  /* T45: "Concluir atendimento" is an illustration; its press brightens through an overlay. */
+  html.motion .flow-frame .ph-btn { pointer-events:none; }
+  html.motion .flow-frame .ph-btn.is-primary { position:relative; }
+  html.motion .flow-frame .ph-btn.is-primary::after { content:""; position:absolute; inset:0; border-radius:inherit; background:rgba(255,255,255,.08); opacity:0; pointer-events:none; }
+  html.motion .mo-carrier.mo-sale { background:none; border-color:transparent; }
+  html.motion .mo-carrier.mo-sale > :not(.ui-val) { visibility:hidden; }
 }
 /* Stage composition inside the 100svh pin. */
 @media (hover: hover) and (pointer: fine) and (min-width: 1280px) and (min-height: 900px) and (prefers-reduced-motion: no-preference) {

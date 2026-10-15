@@ -149,7 +149,7 @@
   const pinQuery = matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px) and (min-height: 600px)');
   const P0 = -0.5, P1 = 6, SPAN = P1 - P0;
   // [start, end, overlay] in stage heights; overlay = the incoming frame lies over the outgoing one.
-  const T = [[0.5, 1.2, 1], [1.55, 2.5, 1], [2.85, 3.45, 1], [3.8, 4.75, 0], [5.05, 5.65, 0]];
+  const T = [[0.5, 1.2, 1], [1.55, 2.5, 1], [2.85, 3.45, 1], [3.8, 4.75, 1], [5.05, 5.65, 0]];
   const mid = t => t[0] + (t[1] - t[0]) / 2;
   const DWELL = [0.25, 1.375, 2.675, 3.625, 4.9, 5.825];
   const E = {
@@ -354,10 +354,39 @@
     for (const s of ['.app-main > .scr-head', '.scr-title', '.scr-sub', '.live-kick', '.tl-desk']) enter(q(3, s), at(2, 0.42), at(2, 0.6));
     enter(q(3, '.live-sale'), at(2, 0.8), at(2, 0.95), 0, 8);
     chrome(2);
+
+    // M12 · T45: return to the office. "Concluir atendimento" is pressed (illustration, not
+    // interactive), the phone relinquishes, the window returns to full size.
+    const press = o4('.ph-btn.is-primary');
+    seg(press, 'scale', at(3, 0), at(3, 0.07), '1', '0.97');
+    seg(press, 'scale', at(3, 0.07), at(3, 0.14), '0.97', '1');
+    seg(pse(press, '::after'), 'opacity', at(3, 0), at(3, 0.07), '0', '1');
+    seg(pse(press, '::after'), 'opacity', at(3, 0.07), at(3, 0.14), '1', '0');
+    seg(ph4, 'translate', at(3, 0.12), at(3, 0.45), '0px 0px', '96px 56px', E.exit);
+    seg(ph4, 'scale', at(3, 0.12), at(3, 0.45), '1', '0.92', E.exit);
+    seg(ph4, 'opacity', at(3, 0.12), at(3, 0.45), '1', '0', E.exit);
+    step(o4('.ph-code'), at(3, 0.3), '1', '0');
+    seg(q(3, '.fd-win'), 'scale', at(3, 0.2), at(3, 0.6), '1', `${1 / 0.88}`, E.travel);
+    seg(q(4, '.fd-win'), 'scale', at(3, 0.2), at(3, 0.6), '0.88', '1', E.travel);
+    seg(pse(q(3, '.app'), '::after'), 'opacity', at(3, 0.2), at(3, 0.6), '0.22', '0');
+    for (const s of ['.app-main > .scr-head', '.scr-title', '.scr-sub', '.live-kick', '.tl-desk']) leave(q(3, s), at(3, 0.2), at(3, 0.45), 0, -8);
+    for (const s of ['.app-main > .scr-head', '.fin-figs', '.fin-chart']) enter(q(4, s), at(3, 0.45), at(3, 0.7), 0, 8);
+    // The two values stay separate: the quote line first, then R$ 420 arrives from the field.
+    const fin = q(4, '.fin-os'), lines = fin.querySelectorAll('.fin-line'), sale = q(3, '.live-sale');
+    enter(fin, at(3, 0.62), at(3, 0.7));
+    enter(fin.querySelector('b'), at(3, 0.64), at(3, 0.7));
+    enter(lines[0], at(3, 0.72), at(3, 0.82), 0, 8);
+    enter(lines[1], at(3, 0.8), at(3, 0.88), 0, 8);
+    enter(lines[1].querySelector('.ui-val'), at(3, 0.86), at(3, 0.88));
+    // .live-sale leaves with the field screen. Its value sat behind the phone; it is drawn again only
+    // once the phone is gone (t 0.46), riding the returning window, so R$ 420 never crosses the phone.
+    step(sale.querySelector('.ui-val'), at(3, 0.2), '1', '0');
+    leave(sale, at(3, 0.2), at(3, 0.45), 0, -8);
+    chrome(3);
     compile();
     // T23 FLIP: source and target are measured in the DOM at the instant each leg starts and lands,
     // with every other effect seeked there (window recession and phone entrance included).
-    const seek = k => { for (const a of anims) a.currentTime = (at(1, k) - P0) * 1000; };
+    const seek = (t, k = 1) => { for (const a of anims) a.currentTime = (at(k, t) - P0) * 1000; };
     seek(0);
     const a23 = local(box(title), w2);
     seek(0.3);
@@ -366,6 +395,19 @@
     const sp = local(box(slot.querySelector('.ui-pill')), dev[2]);
     seek(0.8);
     const head2 = local(box(phHead), dev[2]), chipPill = local(box(phHead.querySelector('.ui-pill')), dev[2]);
+    // T45: OS #0248 leaves the phone head (t 0.30) for the .fin-os title (t 0.70); R$ 420 rides the
+    // returning window from .live-sale (t 0.46–0.60), then flies to the second line (t 0.74–0.88).
+    // Measured where each leg starts and lands.
+    seek(0.46, 3);
+    const saleV = sale.querySelector('.ui-val'), sale0 = local(box(saleV), dev[4]);
+    seek(0.3, 3);
+    const code = o4('.ph-code'), osA = local(box(code), dev[4]);
+    seek(0.7, 3);
+    const osB = local(box(fin.querySelector('b')), dev[4]);
+    seek(0.6, 3);
+    const saleA = local(box(saleV), dev[4]);
+    seek(0.88, 3);
+    const saleB = local(box(lines[1].querySelector('.ui-val')), dev[4]);
     segs = new Map();
     const c23 = carrier(title, w2, [[at(1, 0), a23, a23.h], [at(1, 0.3), b23, b23.h]]);
     step(c23, P0, '0', '0');
@@ -380,6 +422,16 @@
     step(chip, P0, '0', '0');
     seg(chip, 'opacity', at(1, 0.4), at(1, 0.44), '0', '1');
     seg(chip, 'opacity', at(1, 0.8), at(1, 0.86), '1', '0');
+    // The OS carrier is the phone's own "OS #0248" code on a reverse arc; it carries no money.
+    const c45 = carrier(code, dev[4], [[at(3, 0.3), osA, osA.h], [at(3, 0.5), { x: (osA.x + osB.x) / 2, y: (osA.y + osB.y) / 2 - 24 }, (osA.h + osB.h) / 2, 'cubic-bezier(0.3,0,0.7,0.6)'], [at(3, 0.7), osB, osB.h, 'cubic-bezier(0.3,0.4,0.35,1)']]);
+    step(c45, P0, '0', '0');
+    seg(c45, 'opacity', at(3, 0.3), at(3, 0.33), '0', '1');
+    seg(c45, 'opacity', at(3, 0.66), at(3, 0.72), '1', '0');
+    // R$ 420 moves alone (a copy of .live-sale with only its value drawn) into the second line.
+    const c420 = carrier(sale, dev[4], [[at(3, 0.46), sale0, sale0.h], [at(3, 0.6), saleA, saleA.h], [at(3, 0.74), saleA, saleA.h], [at(3, 0.88), saleB, saleB.h]], 'mo-sale', '.ui-val');
+    step(c420, P0, '0', '0');
+    seg(c420, 'opacity', at(3, 0.46), at(3, 0.52), '0', '1');
+    seg(c420, 'opacity', at(3, 0.86), at(3, 0.9), '1', '0');
     compile();
     // #como-funciona lands on the pinned story start (p = 0), never on the intro or the pre-roll.
     const start = Math.ceil(track.getBoundingClientRect().top + scrollY), intro = section.getBoundingClientRect().top + scrollY;
