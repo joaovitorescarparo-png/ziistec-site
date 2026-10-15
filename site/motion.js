@@ -157,7 +157,7 @@
     travel: 'cubic-bezier(0.65,0,0.35,1)', exit: 'cubic-bezier(0.4,0,1,1)', linear: 'linear'
   };
   const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
-  let segs, anims = [], extras = [], swaps = [], applied = NaN, built = false, needSync = false, anchored = false, lastP = 0, lastT = 0, fast = false, fastTimer = 0, shown = [-1, -1], latches = [];
+  let segs, anims = [], extras = [], swaps = [], applied = NaN, built = false, needSync = false, anchored = false, lastP = 0, lastT = 0, fast = false, fastTimer = 0, shown = [-1, -1], latches = [], holds = [], grown = false;
 
   const at = (k, t) => T[k][0] + t * (T[k][1] - T[k][0]);
   const q = (k, s) => frames[k].querySelector(s);
@@ -433,6 +433,10 @@
     seg(c420, 'opacity', at(3, 0.46), at(3, 0.52), '0', '1');
     seg(c420, 'opacity', at(3, 0.86), at(3, 0.9), '1', '0');
     compile();
+    // M13: the six bars hold at the baseline until T45 first passes t 0.60, then grow once (time-based,
+    // latched for the page view). A build already past that point shows them final.
+    if (progress() >= at(3, 0.6)) grown = true;
+    holds = grown ? [] : qa(4, '.fin-bar').map(bar => bar.animate([{ scale: '1 0' }, { scale: '1 0' }], { duration: 1, fill: 'both' }));
     // #como-funciona lands on the pinned story start (p = 0), never on the intro or the pre-roll.
     const start = Math.ceil(track.getBoundingClientRect().top + scrollY), intro = section.getBoundingClientRect().top + scrollY;
     // The offset is held by a WAAPI effect (no inline style); scroll-margin moves no layout.
@@ -454,6 +458,7 @@
     for (const a of anims) a.cancel();
     for (const a of swaps) a.cancel();
     for (const l of latches) for (const a of l.fx) a.cancel();
+    for (const a of holds) a.cancel();
     for (const el of extras) el.remove();
     for (const el of track.querySelectorAll('.mo-show')) el.classList.remove('mo-show');
     frames.forEach(f => f.classList.remove('mo-over', 'mo-under'));
@@ -512,6 +517,11 @@
     if (shown[0] !== n) swap(0, n, 160);
     if (shown[1] !== n) swap(1, n, 240);
     for (const l of latches) if ((p >= l.p) !== l.on) flip(l, p >= l.p);
+    if (!grown && p >= at(3, 0.6)) {
+      grown = true;
+      for (const a of holds) a.cancel();
+      qa(4, '.fin-bar').forEach((bar, i) => swaps.push(bar.animate([{ scale: '1 0' }, { scale: '1 1' }], { duration: 250, delay: 70 * i, easing: E.standard, fill: 'backwards' })));
+    }
     frames.forEach((f, i) => {
       const t = T[i - 1], u = T[i];
       f.classList.toggle('mo-over', !!(t && t[2] && p > t[0] && p < t[1]));
