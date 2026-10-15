@@ -149,7 +149,7 @@
   const pinQuery = matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px) and (min-height: 600px)');
   const P0 = -0.5, P1 = 6, SPAN = P1 - P0;
   // [start, end, overlay] in stage heights; overlay = the incoming frame lies over the outgoing one.
-  const T = [[0.5, 1.2, 1], [1.55, 2.5, 1], [2.85, 3.45, 1], [3.8, 4.75, 1], [5.05, 5.65, 0]];
+  const T = [[0.5, 1.2, 1], [1.55, 2.5, 1], [2.85, 3.45, 1], [3.8, 4.75, 1], [5.05, 5.65, 1]];
   const mid = t => t[0] + (t[1] - t[0]) / 2;
   const DWELL = [0.25, 1.375, 2.675, 3.625, 4.9, 5.825];
   const E = {
@@ -383,6 +383,32 @@
     step(sale.querySelector('.ui-val'), at(3, 0.2), '1', '0');
     leave(sale, at(3, 0.2), at(3, 0.45), 0, -8);
     chrome(3);
+
+    // M14 · T56: finance → history. The money leaves the summary first; the service goes to history.
+    for (const s of ['.app-main > .scr-head', '.fin-figs', '.fin-chart']) leave(q(4, s), at(4, 0), at(4, 0.3), 0, -8);
+    lines.forEach(el => leave(el, at(4, 0.15), at(4, 0.3)));
+    step(fin.querySelector('b'), at(4, 0.3), '1', '0');
+    leave(fin, at(4, 0.3), at(4, 0.45));
+    enter(q(5, '.scr-head .ui-lbl'), at(4, 0.3), at(4, 0.5), 0, 8);
+    for (const s of ['.scr-title', '.scr-sub']) enter(q(5, s), at(4, 0.35), at(4, 0.55), 0, 8);
+    const evs = qa(5, '.hist-ev');
+    [[0, 0.4, 0.55], [2, 0.62, 0.74], [3, 0.7, 0.82]].forEach(([i, a, b]) => enter(evs[i], at(4, a), at(4, b), 0, 8));
+    enter(evs[1].querySelector('.hist-what'), at(4, 0.55), at(4, 0.65));
+    enter(evs[1].querySelector('.hist-ic'), at(4, 0.55), at(4, 0.65));
+    seg(evs[1].querySelector('.hist-ic'), 'scale', at(4, 0.55), at(4, 0.65), '0.6', '1');
+    [[0, 0.48, 0.6], [1, 0.62, 0.7], [2, 0.7, 0.78]].forEach(([i, a, b]) => seg(pse(evs[i], '::before'), 'scale', at(4, a), at(4, b), '1 0', '1 1'));
+    const done = q(5, '.scr-head .ui-pill');
+    enter(done, at(4, 0.8), at(4, 1));
+    seg(done, 'scale', at(4, 0.8), at(4, 1), '0.96', '1');
+    // Rail: "OS #0248" becomes "OS #0248 · concluída" at t 0.80 (160 ms); until then a copy of the
+    // short token rides the stage-06 rail on the same path.
+    const tok = rails[5].querySelector('.rail-token'), short = rails[4].querySelector('.rail-token').cloneNode(true), dw = tok.offsetWidth - rails[4].querySelector('.rail-token').offsetWidth;
+    short.classList.add('mo-carrier');
+    tok.after(short);
+    extras.push(short);
+    seg(short, 'translate', T[4][0], T[4][1], `${xs[4] - xs[5] - dw}px 0px`, `${-dw}px 0px`, E.linear);
+    latches.push({ p: at(4, 0.8), outs: [short], ins: [tok], ms: 160, fx: [] });
+    chrome(4);
     compile();
     // T23 FLIP: source and target are measured in the DOM at the instant each leg starts and lands,
     // with every other effect seeked there (window recession and phone entrance included).
@@ -408,6 +434,11 @@
     const saleA = local(box(saleV), dev[4]);
     seek(0.88, 3);
     const saleB = local(box(lines[1].querySelector('.ui-val')), dev[4]);
+    // T56: the .fin-os title (t 0.30) to the "OS #0248 · concluída" event (t 0.60).
+    seek(0.3, 4);
+    const finA = local(box(fin.querySelector('b')), dev[5]);
+    seek(0.6, 4);
+    const finB = local(box(evs[1].querySelector('b')), dev[5]);
     segs = new Map();
     const c23 = carrier(title, w2, [[at(1, 0), a23, a23.h], [at(1, 0.3), b23, b23.h]]);
     step(c23, P0, '0', '0');
@@ -432,6 +463,11 @@
     step(c420, P0, '0', '0');
     seg(c420, 'opacity', at(3, 0.46), at(3, 0.52), '0', '1');
     seg(c420, 'opacity', at(3, 0.86), at(3, 0.9), '1', '0');
+    // The summary card without its money lines carries the service into the history.
+    const c56 = carrier(fin, dev[5], [[at(4, 0.3), finA, finA.h], [at(4, 0.6), finB, finB.h]], 'mo-fin', 'b');
+    step(c56, P0, '0', '0');
+    step(c56, at(4, 0.3), '0', '1');
+    seg(c56, 'opacity', at(4, 0.58), at(4, 0.65), '1', '0');
     compile();
     // M13: the six bars hold at the baseline until T45 first passes t 0.60, then grow once (time-based,
     // latched for the page view). A build already past that point shows them final.
