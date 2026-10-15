@@ -209,8 +209,9 @@
     clone.setAttribute('aria-hidden', 'true');
     holder.append(clone);
     extras.push(clone);
-    const x0 = clone.offsetLeft, y0 = clone.offsetTop, c = local(box(clone), holder), e = inner ? local(box(clone.querySelector(inner)), holder) : { x: c.x, y: c.y, h: clone.offsetHeight };
-    const at = (r, h) => { const k = h / e.h; return [`${r.x - x0 - k * (e.x - c.x)}px ${r.y - y0 - k * (e.y - c.y)}px`, `${k}`]; };
+    // Unrounded boxes (offset* values are integers and would misplace sub-pixel text).
+    const c = local(box(clone), holder), e = inner ? local(box(clone.querySelector(inner)), holder) : c;
+    const at = (r, h) => { const k = h / e.h; return [`${r.x - c.x - k * (e.x - c.x)}px ${r.y - c.y - k * (e.y - c.y)}px`, `${k}`]; };
     for (let i = 1; i < path.length; i++) {
       const [pa, ra, ha] = path[i - 1], [pb, rb, hb, ease = E.travel] = path[i], a = at(ra, ha), b = at(rb, hb);
       seg(clone, 'translate', pa, pb, a[0], b[0], ease);

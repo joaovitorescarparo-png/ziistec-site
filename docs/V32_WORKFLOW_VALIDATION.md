@@ -1,4 +1,4 @@
-# V3.2 workflow M06–M10
+# V3.2 workflow M06–M14
 
 Scope: M06 pin + track, M07 copy/numeral, M08 rail, M09 T12 and M10 T23 on
 `feat/homepage-v32-motion`, after `98c551c` (V3.2 HERO FOUNDATION — APPROVED).
@@ -30,6 +30,10 @@ unchanged (F2 hashes).
 | M08 | Continuous fill and OS #0248 token on all rails; stops switch at each midpoint (160 ms); place chip crossfades 240 ms when its words change |
 | M09 · T12 | Approval pill at D1 0.30–0.45; quote leaves; ORC-0218 header flies (t 0.20–0.60) into "Origem · ORC-0218 aprovado"; OS header, fields and toast enter; nav indicator moves; crumb crossfades t 0.30–0.60 |
 | M10 · T23 | OS screen leaves; "OS #0248" flies into the 14:00 slot (t 0.00–0.30); agenda takes over; both windows recede 1 → 0.88 (t 0.20–0.55); phone enters (t 0.30–0.85); "OS #0248 · Atribuída" chip arcs from the slot to the phone head (t 0.40–0.80); phone head and body fill (t 0.78–1.05, body 0.04 apart); crumb crossfades t 0.30–0.60; place becomes "No campo · técnico" at t 0.50. No R$ enters the phone or any carrier |
+| M11 · T34 | Phone stays (a copy of the stage-03 phone lies under the transparent stage-04 phone). Pill Atribuída → Em atendimento at t 0.25 (240 ms, scale 0.96 → 1 from the left); title/address/time/Solicitação/Itens leave −12px (t 0.20–0.45); tl-phone 13:42 / 13:55 / 14:10 (t 0.40–0.79), now-dot scales once; Material usado, checks 0.6 → 1 (t 0.78–0.92, 0.04 apart); back window dims 0 → 0.22 (t 0.10–0.60) and crossfades to OS #0248 · Em atendimento with .tl-desk; crumb/nav; R$ 420 enters only in the office window (t 0.80–0.95) |
+| M12 · T45 | "Concluir atendimento" press (scale 1 → 0.97 → 1, 8% white overlay, t 0.00–0.14); phone leaves (96px 56px, 0.92, 0, t 0.12–0.45); windows 0.88 → 1 and .app-dim 0.22 → 0 (t 0.20–0.60); place chip at t 0.50; crumb Financeiro › Setembro; "OS #0248" arcs from the phone head into the .fin-os title (t 0.30–0.70); figures enter whole (t 0.45–0.70); ORC-0218 R$ 2.000 line (t 0.72–0.82), then R$ 420 moves alone from .live-sale into the second line (t 0.74–0.88), drawn only after the phone is gone (t 0.46) |
+| M13 | First time T45 passes t 0.60: six bars scaleY 0 → 1 from the baseline, ABR → SET, 70 ms apart, 600 ms total; time-based, once per page view; final in both directions afterwards |
+| M14 · T56 | Header, figures and chart leave (t 0.00–0.30); money lines leave first (t 0.15–0.30); the card without its money carries "OS #0248" into "OS #0248 · concluída" (t 0.30–0.60), event text and .hist-ic arrive (t 0.55–0.65); ORC-0218 aprovado, Produto, Garantia assemble, lines grow scaleY (t 0.40–0.82); Concluída pill (t 0.80–1.00); rail token becomes "OS #0248 · concluída" at t 0.80 (160 ms); D6 holds 0.35 H, no exit animation |
 
 During T12 and T23 the incoming frame lies over the outgoing one (`mo-over` /
 `mo-under`); identical chrome is not drawn twice. Carriers, the nav indicator
@@ -126,6 +130,51 @@ at 390×844, +24 ms). Total load CLS is 0.033 at 1280×720 and 0.017 at 390×844
 
 `motion-boot.js` + `motion.js` after the hardening: 8,602 B gzip (target
 12 KB, ceiling 16 KB).
+
+## M11–M14 (complete desktop narrative)
+
+All five transitions are overlay transitions; T34, T45 and T56 follow the same
+engine as T12/T23 (paused WAAPI effects seeked by the shared scheduler, carriers
+measured in the DOM at the instant each leg starts and lands, no fixed widths).
+Added to the engine: pseudo-element targets (`.app-dim::after`, the press
+overlay, the history lines) and reversible time-based threshold swaps (T34 pill,
+T56 token). FLIP heights now use unrounded boxes (`offsetHeight` rounding
+misplaced the T45 code by up to 0.48 px; T12/T23 are unchanged in practice).
+
+Evidence at the M11–M14 head (Chromium headless):
+
+- Dwells D1–D6 equal the static frames at 1440×900, 1280×720 and 1024×768
+  (max box delta 0.0125 px, opacity delta 0); D4 0.0032–0.0063, D5
+  0.0031–0.0094, D6 0. 1366×768 and 1280×800 stay inside the stage.
+- Reverse identity at 14 instants across T12–T56; no R$ in any phone, the T34
+  phone copy or the chip, no visible R$ value over a visible phone, no
+  R$ 2.420 in the track, crumb never empty (minimum sum 1.0), sampled every
+  0.02 H from p 0.45 to 5.70 at all five pinned classes.
+- FLIP < 0.002 px for T23, T45 (OS code, R$ 420) and T56 (OS title) at all
+  five classes, after a resize mid-T23/T34/T45/T56 (each equal to a fresh load)
+  and with webfonts delayed 1500 ms.
+- M13: one grow (six effects) across 03→04→05, 05→04→05 and 05→06→05;
+  bars held at the baseline before T45 t 0.60 and final afterwards.
+- Scroll 03 → 06 → 03 (≈ 2 H/s): 0 long tasks, motion CLS 0, max one pending
+  frame; p50 16.7 ms at CPU 1× and 4×; p95 16.8 ms at 1×, 33.4 ms at 4×;
+  worst frame 33–50 ms.
+- Anchors, fast-scroll cut, reduced motion, coarse pointer, tablet and no-JS
+  unchanged; hero matrix 0 raw pixels at 7 sizes; hero LCP pair deltas −40 to
+  −12 ms (desktop medians), title still LCP at first paint.
+- `motion-boot.js` + `motion.js`: 11,388 B gzip (target 12 KB).
+
+Known limits and debt:
+
+- The build (load at ≈ 300 ms, resize, media change, late webfonts) grew with
+  the new transitions: one long task of ≈ 60–74 ms at CPU 1× and ≈ 238 ms at
+  CPU 4× (≈ 174 ms before). It never runs while scrolling; the late-font
+  remeasurement debt is unchanged in kind and now larger.
+- The press brightness is an 8% white overlay, not `filter: brightness()`
+  (the F2 gate forbids animating `filter`).
+- T34 needs an `aria-hidden` copy of the stage-03 phone inside stage 04: frames
+  are separate sticky layers, so a transparent incoming phone would otherwise
+  show the incoming window's content through it.
+- Real-device pacing (laptops, Safari, trackpads) is still manual.
 
 ## Runtime budget amendment 2 (approved)
 
