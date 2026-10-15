@@ -137,7 +137,7 @@
   });
 })();
 (() => {
-  // M06–M10: pinned workflow. Scroll is native; one rAF per scroll maps scrollY to p (0 → 6 over
+  // M06–M14: pinned workflow. Scroll is native; one rAF per scroll maps scrollY to p (0 → 6 over
   // 600svh) and seeks paused, finite WAAPI effects. Every effect ends on the approved static frame.
   const root = document.documentElement;
   const track = window.IntersectionObserver && document.querySelector('[data-flow-track]');
@@ -149,7 +149,7 @@
   const pinQuery = matchMedia('(hover: hover) and (pointer: fine) and (min-width: 1024px) and (min-height: 600px)');
   const P0 = -0.5, P1 = 6, SPAN = P1 - P0;
   // [start, end, overlay] in stage heights; overlay = the incoming frame lies over the outgoing one.
-  const T = [[0.5, 1.2, 1], [1.55, 2.5, 1], [2.85, 3.45, 0], [3.8, 4.75, 0], [5.05, 5.65, 0]];
+  const T = [[0.5, 1.2, 1], [1.55, 2.5, 1], [2.85, 3.45, 1], [3.8, 4.75, 0], [5.05, 5.65, 0]];
   const mid = t => t[0] + (t[1] - t[0]) / 2;
   const DWELL = [0.25, 1.375, 2.675, 3.625, 4.9, 5.825];
   const E = {
@@ -157,11 +157,14 @@
     travel: 'cubic-bezier(0.65,0,0.35,1)', exit: 'cubic-bezier(0.4,0,1,1)', linear: 'linear'
   };
   const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
-  let segs, anims = [], extras = [], swaps = [], applied = NaN, built = false, needSync = false, anchored = false, lastP = 0, lastT = 0, fast = false, fastTimer = 0, shown = [-1, -1];
+  let segs, anims = [], extras = [], swaps = [], applied = NaN, built = false, needSync = false, anchored = false, lastP = 0, lastT = 0, fast = false, fastTimer = 0, shown = [-1, -1], latches = [];
 
   const at = (k, t) => T[k][0] + t * (T[k][1] - T[k][0]);
   const q = (k, s) => frames[k].querySelector(s);
   const qa = (k, s) => [...frames[k].querySelectorAll(s)];
+  // A pseudo-element target for seg(): { el, pseudo }, one object per element and pseudo.
+  const pseudos = new Map();
+  const pse = (el, name) => { const k = pseudos.get(el) || {}; pseudos.set(el, k); return k[name] ||= { el, pseudo: name }; };
   function seg(el, prop, a, b, from, to, ease = E.standard) {
     if (!el) return;
     if (!segs.has(el)) segs.set(el, {});
@@ -191,7 +194,7 @@
         cur = s.to;
       }
       keys.push({ offset: 1, [prop]: cur });
-      const animation = el.animate(keys, { duration: SPAN * 1000, fill: 'both' });
+      const animation = (el.pseudo ? el.el : el).animate(keys, { duration: SPAN * 1000, fill: 'both', pseudoElement: el.pseudo });
       animation.pause();
       anims.push(animation);
     }
@@ -320,6 +323,37 @@
     enter(phHead, at(1, 0.78), at(1, 0.86));
     qa(2, '.ph-screen > :not(.ph-notch):not(.ph-head)').forEach((el, i) => enter(el, at(1, 0.8 + 0.04 * i), at(1, 0.85 + 0.04 * i), 0, 8));
     chrome(1);
+
+    // M11 · T34: atribuída → em atendimento. The phone stays: an aria-hidden copy of the stage-03 phone
+    // sits under the stage-04 phone (whose shell is transparent while it lies over stage 03), so the
+    // outgoing and incoming content share one phone body above both windows. No value enters the phone.
+    const ph4 = q(3, '.fd-phone'), ph3 = q(2, '.fd-phone').cloneNode(true), o3 = s => ph3.querySelector(s), o4 = s => ph4.querySelector(s);
+    ph3.classList.add('mo-clone');
+    ph3.setAttribute('aria-hidden', 'true');
+    ph4.before(ph3);
+    extras.push(ph3);
+    step(ph3, P0, '0', '0');
+    step(ph3, T[2][0], '0', '1');
+    step(ph3, T[2][1], '1', '0');
+    latches = [{ p: at(2, 0.25), outs: [o3('.ph-head .ui-pill')], ins: [o4('.ph-head .ui-pill')], ms: 240, fx: [] }];
+    for (const s of ['.ph-title', '.ph-addr', '.ph-time']) leave(o3(s), at(2, 0.2), at(2, 0.35), 0, -12);
+    ph3.querySelectorAll('.ph-panel').forEach(el => leave(el, at(2, 0.2), at(2, 0.45), 0, -12));
+    enter(o4('.ph-title'), at(2, 0.3), at(2, 0.45), 0, 8);
+    ph4.querySelectorAll('.tl-item').forEach((el, i) => enter(el, at(2, 0.4 + 0.12 * i), at(2, 0.55 + 0.12 * i), 0, 8));
+    seg(o4('.tl-now'), 'scale', at(2, 0.7), at(2, 0.79), '0', '1');
+    enter(o4('.ph-material'), at(2, 0.68), at(2, 0.8), 0, 8);
+    ph4.querySelectorAll('.ph-check').forEach((el, i) => { enter(el, at(2, 0.78 + 0.04 * i), at(2, 0.88 + 0.04 * i)); seg(el, 'scale', at(2, 0.78 + 0.04 * i), at(2, 0.88 + 0.04 * i), '0.6', '1'); });
+    // The head code and the buttons are the same on both phones: the outgoing ones stay (the buttons
+    // slide to their new place) and the incoming ones take over when the overlay ends.
+    const btns = [o3('.ph-btns'), o4('.ph-btns')], dy = (box(btns[1]).y - box(btns[0]).y) / (box(dev[2]).width / dev[2].offsetWidth);
+    seg(btns[0], 'translate', at(2, 0.4), at(2, 0.8), '0px 0px', `0px ${dy}px`, E.travel);
+    for (const el of [btns[1], o4('.ph-code')]) step(el, T[2][1], '0', '1');
+    // Back window: dims behind the phone and crossfades agenda → "OS #0248 · Em atendimento".
+    seg(pse(q(3, '.app'), '::after'), 'opacity', at(2, 0.1), at(2, 0.6), '0', '0.22');
+    for (const s of ['.app-main > .scr-head', '.ag-title', '.ag-list']) leave(q(2, s), at(2, 0.3), at(2, 0.48));
+    for (const s of ['.app-main > .scr-head', '.scr-title', '.scr-sub', '.live-kick', '.tl-desk']) enter(q(3, s), at(2, 0.42), at(2, 0.6));
+    enter(q(3, '.live-sale'), at(2, 0.8), at(2, 0.95), 0, 8);
+    chrome(2);
     compile();
     // T23 FLIP: source and target are measured in the DOM at the instant each leg starts and lands,
     // with every other effect seeked there (window recession and phone entrance included).
@@ -367,6 +401,7 @@
     if (!built) return;
     for (const a of anims) a.cancel();
     for (const a of swaps) a.cancel();
+    for (const l of latches) for (const a of l.fx) a.cancel();
     for (const el of extras) el.remove();
     for (const el of track.querySelectorAll('.mo-show')) el.classList.remove('mo-show');
     frames.forEach(f => f.classList.remove('mo-over', 'mo-under'));
@@ -390,6 +425,14 @@
       swaps.push(animation);
     });
     if (old < 0) els.forEach((el, i) => { if (i !== n) swaps.push(el.animate([{ opacity: 0 }, { opacity: 0 }], { duration: 0, fill: 'forwards' })); });
+  }
+  // Time-based threshold swaps (T34 phone pill, T56 rail token), reversible at the same threshold.
+  function flip(l, on) {
+    const d = l.on === undefined ? 0 : l.ms;
+    l.on = on;
+    for (const a of l.fx) a.cancel();
+    l.fx = [...l.outs.map(el => el.animate([{ opacity: on ? 1 : 0 }, { opacity: on ? 0 : 1 }], { duration: d, easing: E.standard, fill: 'forwards' })),
+      ...l.ins.map(el => el.animate(on ? [{ opacity: 0, scale: '0.96' }, { opacity: 1, scale: '1' }] : [{ opacity: 1 }, { opacity: 0 }], { duration: d, easing: E.standard, fill: 'forwards' }))];
   }
   // Read phase of the shared tick: a pending rebuild (resize, media change, fonts) measures and
   // writes on its own; otherwise only the scroll position is read here.
@@ -416,6 +459,7 @@
     const n = T.filter(t => p >= mid(t)).length;
     if (shown[0] !== n) swap(0, n, 160);
     if (shown[1] !== n) swap(1, n, 240);
+    for (const l of latches) if ((p >= l.p) !== l.on) flip(l, p >= l.p);
     frames.forEach((f, i) => {
       const t = T[i - 1], u = T[i];
       f.classList.toggle('mo-over', !!(t && t[2] && p > t[0] && p < t[1]));

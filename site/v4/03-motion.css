@@ -71,6 +71,11 @@ html.motion.motion-pending .mk-hero-title { translate:0 16px; }
   html.motion .mo-carrier.scr-head { gap:12px; }
   html.motion .mo-shell .ph, html.motion .mo-shell .ph-screen { background:none; box-shadow:none; }
   html.motion .mo-shell .ph-screen > :not(.ph-head) { visibility:hidden; }
+  /* T34: the stage-04 phone lies on a copy of the stage-03 phone; only its content is drawn. */
+  html.motion .flow-frame[data-flow-stage="4"].mo-over .fd-phone:last-child .ph,
+  html.motion .flow-frame[data-flow-stage="4"].mo-over .fd-phone:last-child .ph-screen { background:none; box-shadow:none; }
+  html.motion .flow-frame[data-flow-stage="4"].mo-over .fd-phone:last-child .ph-notch { visibility:hidden; }
+  html.motion .flow-frame .ph-head .ui-pill { transform-origin:0 50%; }
 }
 /* Stage composition inside the 100svh pin. */
 @media (hover: hover) and (pointer: fine) and (min-width: 1280px) and (min-height: 900px) and (prefers-reduced-motion: no-preference) {

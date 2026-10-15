@@ -23,9 +23,9 @@ const FRAME = ([k, pinned]) => {
   const eff = el => { let v = 1; for (let e = el; e && e !== t; e = e.parentElement) v *= +getComputedStyle(e).opacity; return v; };
   const layers = '.rail,.flow-count,.flow-num,.flow-step-title,.flow-step-desc,.flow-place,.flow-devices,.flow-foot>span:last-child';
   return {
-    boxes: [...li.querySelectorAll('*')].filter(e => !e.closest('.mo-carrier,.mo-ghost,.mo-crumb')).map(e => { const r = e.getBoundingClientRect(); return [r.x - o.x, r.y - o.y, r.width, r.height, eff(e)]; }),
+    boxes: [...li.querySelectorAll('*')].filter(e => !e.closest('.mo-carrier,.mo-ghost,.mo-crumb,.mo-clone')).map(e => { const r = e.getBoundingClientRect(); return [r.x - o.x, r.y - o.y, r.width, r.height, eff(e)]; }),
     others: pinned ? Math.max(0, ...[...t.children].filter((_, i) => i !== k).flatMap(f => [...f.querySelectorAll(layers)].map(eff))) : 0,
-    carriers: Math.max(0, ...[...t.querySelectorAll('.mo-carrier')].map(eff)),
+    carriers: Math.max(0, ...[...t.querySelectorAll('.mo-carrier, .mo-clone')].map(eff)),
     inside: [...li.querySelectorAll('.flow-devices, .flow-copy, .rail, .flow-foot')].every(e => { const r = e.getBoundingClientRect(); return r.top >= o.top - 30 && r.bottom <= o.bottom + 0.5; })
   };
 };
