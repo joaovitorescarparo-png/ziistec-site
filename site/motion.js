@@ -697,11 +697,12 @@
         const i = devices.indexOf(e.target), seen = first.has(i);
         first.add(i);
         if (st[i].done) continue;
-        // Reached already when first seen, or passed between two callbacks: final, never hidden.
-        if (e.isIntersecting && seen) play(i);
+        // Plays only when it rises from below into the trigger zone. Reached already when first seen,
+        // passed by a jump, or met again from above (scrolling back up): final, never hidden.
+        if (e.isIntersecting && seen && e.boundingClientRect.top >= 0) play(i);
         else if (e.isIntersecting || e.boundingClientRect.top < 0) final(i);
         else continue;
-        io.unobserve(e.target);
+        io.unobserve(devices[i]);
       }
     }, { rootMargin: '0px 0px -20% 0px' });
     scenes.forEach((_, i) => {
@@ -713,5 +714,7 @@
   }
   narrow.addEventListener('change', sync);
   reduced.addEventListener('change', sync);
-  sync();
+  // Start states are applied once webfonts have settled: text hidden during the font swap would
+  // otherwise report that load-time shift later, when it fades in.
+  document.fonts.ready.then(sync);
 })();
