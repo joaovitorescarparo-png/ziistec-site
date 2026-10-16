@@ -134,6 +134,15 @@ html.motion.motion-pending .mk-hero-title { translate:0 16px; }
     html.motion .flow-devices { --fk:min(tan(atan2(100cqw - 414px,824px)),tan(atan2(100vh - 162px,586px))); }
   }
 }
+/* M18 secondary reveals: origins only, plus the audience rule redrawn as a pseudo line on the
+   exact pixels of the static border so it can draw. No start state lives here: motion.js holds blocks
+   with WAAPI only while they wait below the viewport. */
+@media (prefers-reduced-motion: no-preference) {
+  html.motion .problem-arrow-r { transform-origin:0 50%; }
+  html.motion .problem-arrow-d { transform-origin:50% 0; }
+  html.motion .audience-row { position:relative; border-top-color:transparent; }
+  html.motion .audience-row::before { content:""; position:absolute; top:-1px; right:0; left:0; height:1px; background:var(--zt-divider-200); transform-origin:0 0; }
+}
 @media (prefers-reduced-motion: reduce) {
   .page-home {
     --mo-enter-lg:0ms;

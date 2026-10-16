@@ -267,8 +267,19 @@ if(/position:\s?sticky/.test(motionCss)){
 // of the viewport and play once (each scene is unobserved after it plays or is made final).
 if(/data-flow-scene/.test(motionJs)){
   if(!motionJs.includes("matchMedia('(max-width: 1023px)')")) throw new Error('M15–M17: cenas mobile precisam ficar abaixo de 1024 px');
-  if(!motionJs.includes("rootMargin: '0px 0px -20% 0px'")||(motionJs.match(/new IntersectionObserver\(/g)||[]).length!==2) throw new Error('M15–M17: um único observer compartilhado (rootMargin 0px 0px -20% 0px)');
+  if((motionJs.match(/rootMargin: '0px 0px -20% 0px'/g)||[]).length!==1) throw new Error('M15–M17: um único observer compartilhado (rootMargin 0px 0px -20% 0px)');
   if(!motionJs.includes('io.unobserve(devices[i])')) throw new Error('M15–M17: cada cena toca uma única vez (unobserve)');
+}
+// M18: the secondary sections share ONE observer at 85% of the viewport (the only other observers are
+// the M15–M17 scenes and the workflow's coarse-pointer fallback), WAAPI only — no scroll scheduler, no
+// requestAnimationFrame. Each block plays once; a block on screen, passed or unreachable is final.
+{
+  const sections=motionJs.slice(motionJs.lastIndexOf('(() => {')).replace(/^\s*\/\/.*$/gm,'');
+  if((motionJs.match(/new IntersectionObserver\(/g)||[]).length!==3||(sections.match(/new IntersectionObserver\(/g)||[]).length!==1||!sections.includes("rootMargin: '0px 0px -15% 0px'")) throw new Error('M18: um único observer compartilhado para as seções (rootMargin 0px 0px -15% 0px)');
+  if(/requestAnimationFrame|ziisMotion|iterations|addEventListener\(\s*['"](?:scroll|wheel|touch)/.test(sections)) throw new Error('M18: revelações secundárias sem RAF, scheduler ou listener de scroll');
+  if(!sections.includes('if (u.done) continue;')||!sections.includes('u.done = true;')||!sections.includes('io?.unobserve(u.el);')) throw new Error('M18: cada bloco revela uma única vez (done + unobserve)');
+  if(!sections.includes('else if (e.isIntersecting || e.boundingClientRect.top < 0) final(u);')||!sections.includes('if (r.top < innerHeight || !r.height || r.top + scrollY > end) final(u);')) throw new Error('M18: bloco passado, na tela, oculto ou inalcançável precisa ficar final (scroll rápido, reload, âncora)');
+  if(!sections.includes("reduced.addEventListener('change', settle);")||!sections.includes("if (reduced.matches || !root.classList.contains('motion')) return settle();")) throw new Error('M18: reduced motion deixa todas as seções finais');
 }
 // F2.6: approved CSS and markup are immutable, apart from the two external scripts.
 const normalizedHash=source=>sha256(Buffer.from(source.replace(/\r\n/g,'\n')));

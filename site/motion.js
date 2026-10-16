@@ -718,3 +718,83 @@
   // otherwise report that load-time shift later, when it fades in.
   document.fonts.ready.then(sync);
 })();
+(() => {
+  // M18: the secondary sections reveal once, much quieter than the Hero and the Workflow. One
+  // shared IntersectionObserver (line at 85% of the viewport), WAAPI only, no requestAnimationFrame and
+  // no CSS start state: without JS nothing is ever hidden. A block on screen or passed at init (reload,
+  // anchor), passed by a jump, or met again from above is final; so is everything under reduced motion.
+  const root = document.documentElement;
+  if (!window.IntersectionObserver || !document.querySelector('.mk-cta')) return;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const emphasis = 'cubic-bezier(0.16,1,0.3,1)', standard = 'cubic-bezier(0.2,0,0,1)';
+  const Y = y => [{ opacity: 0, translate: `0 ${y}px` }, { opacity: 1, translate: '0 0' }];
+  const X = x => [{ opacity: 0, translate: `${x}px 0` }, { opacity: 1, translate: '0 0' }];
+  const FADE = [{ opacity: 0 }, { opacity: 1 }];
+  const SX = [{ scale: '0 1' }, { scale: '1 1' }];
+  const all = (el, sel) => [...el.querySelectorAll(sel)];
+  // [observed blocks, storyboard(block, k)]: k orders the blocks of one group that reach the line
+  // together (a desktop row), so each block still triggers on its own when stacked. Steps are
+  // [element, keyframes, delay, duration, easing, pseudo-element].
+  const GROUPS = [
+    ['.problem-title', el => [[el, Y(12), 0, 420]]],
+    ['.problem-row', (el, k, d = 70 * k, q = s => el.querySelector(s)) => [[q('.problem-before'), X(-8), d, 420],
+      [q('.problem-arrow-r'), SX, d + 70, 240], [q('.problem-arrow-d'), [{ scale: '1 0' }, { scale: '1 1' }], d + 70, 240], [q('.problem-after'), X(8), d + 140, 420]]],
+    // The numeral rises with its item 70 ms before the text; the number itself never counts.
+    ['.results-item', (el, k) => [[el, Y(16), 70 * k, 420], ...all(el, '.results-item-title, .results-text').map(t => [t, FADE, 70 * k + 70, 420])]],
+    // The row rule (a pseudo line in place of the static border) draws while the row rises.
+    ['.audience-row', (el, k) => [[el, SX, 70 * k, 420, standard, '::before'], ...all(el, ':scope > *').map(c => [c, Y(12), 70 * k, 420])]],
+    ['.growth-step', (el, k) => [[el, Y(12), 160 * k, 420], ...all(el, '.growth-av, .growth-z').map((a, j) => [a, [{ opacity: 0, scale: '0.8' }, { opacity: 1, scale: '1' }], 160 * k + 70 + 70 * j, 320])]],
+    ['.testi-lead', (el, k, q = s => el.querySelector(s)) => [[q('.testi-lead-mark'), FADE, 0, 320], [q('.testi-lead-quote'), Y(16), 70, 520, emphasis], [q('.testi-lead-by'), Y(8), 310, 320]]],
+    ['.testi-more .testi', (el, k) => [[el, Y(16), 70 * k, 420]]],
+    // Profissional after Essencial, longer and with emphasis, then its badge; no card ever above scale 1.
+    ['.plan', (el, k) => el.matches('.plan-pro') ? [[el, Y(32), 160 * k, 520, emphasis], [el.querySelector('.plan-badge'), [{ opacity: 0, scale: '0.96' }, { opacity: 1, scale: '1' }], 160 * k + 520, 240]] : [[el, Y(16), 160 * k, 420]]]
+  ];
+  const units = GROUPS.flatMap(([sel, plan], g) => [...document.querySelectorAll(sel)].map(el => ({ el, g, plan, fx: [], done: false, seen: false })));
+  const steps = (u, k = 0) => u.plan(u.el, k).filter(s => s[0]);
+  let io = null;
+  function stop(u) {
+    for (const a of u.fx) a.cancel();
+    u.fx = [];
+  }
+  function final(u) {
+    u.done = true;
+    stop(u);
+    io?.unobserve(u.el);
+  }
+  function play(u, k) {
+    final(u);
+    u.fx = steps(u, k).map(([el, keys, delay, duration, easing = standard, pseudoElement]) => el.animate(keys, { delay, duration, easing, fill: 'backwards', pseudoElement }));
+  }
+  function settle() {
+    io?.disconnect();
+    io = null;
+    units.forEach(final);
+  }
+  function start() {
+    if (reduced.matches || !root.classList.contains('motion')) return settle();
+    const end = root.scrollHeight - innerHeight * 0.15;
+    io = new IntersectionObserver(entries => {
+      for (const e of entries) {
+        const u = units.find(v => v.el === e.target), seen = u.seen, line = innerHeight * 0.85 + 48;
+        u.seen = true;
+        if (u.done) continue;
+        // Plays only when it rises from below into the line, with the blocks of its group that reach
+        // the line in the same row; anything else that reaches the root is final, never hidden.
+        if (e.isIntersecting && seen && e.boundingClientRect.top >= 0) {
+          units.filter(v => v.g === u.g && !v.done && (v === u || (t => t >= 0 && t < line)(v.el.getBoundingClientRect().top))).forEach(play);
+        } else if (e.isIntersecting || e.boundingClientRect.top < 0) final(u);
+      }
+    }, { rootMargin: '0px 0px -15% 0px' });
+    for (const u of units) {
+      const r = u.el.getBoundingClientRect();
+      // Held only when wholly below the viewport, laid out, and able to reach the line at all.
+      if (r.top < innerHeight || !r.height || r.top + scrollY > end) final(u);
+      else {
+        u.fx = steps(u).map(([el, keys, , , , pseudoElement]) => el.animate([keys[0], keys[0]], { duration: 1, fill: 'both', pseudoElement }));
+        io.observe(u.el);
+      }
+    }
+  }
+  reduced.addEventListener('change', settle);
+  document.fonts.ready.then(start);
+})();
