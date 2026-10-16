@@ -1,3 +1,4 @@
+import { gzipSync } from 'node:zlib';
 import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -297,6 +298,22 @@ if(/data-flow-scene/.test(motionJs)){
   if((html.match(/<details class="faq-item"(?: open)?><summary class="faq-q">/g)||[]).length!==6) throw new Error('M19: FAQ precisa continuar <details>/<summary> nativo');
   if(/faq|<details|details-content|['"]toggle['"]|\.open\b|\bopen\s*=/i.test(code(motionJs))||/['"]toggle['"]|\.open\b|details/i.test(code(script))) throw new Error('M19: FAQ sem acordeão JS (nenhum handler de <details>)');
   if(!/@supports \(interpolate-size: allow-keywords\) \{ html\.motion \.faq-item \{ interpolate-size:allow-keywords; \} html\.motion \.faq-item::details-content \{ block-size:0;[^}]*transition:block-size 240ms/.test(motionCss)) throw new Error('M19: altura do FAQ só via ::details-content + interpolate-size (240 ms)');
+}
+// M21: microinteractions are CSS. The keyboard ring is never lost: 2px, 2px offset, brand-strong on dark
+// buttons and the approved brand-deep on light ones, appearing in 90 ms and never transitioned away
+// (outline-color is timed only inside :focus-visible). Pricing cards never react to hover, and the
+// storytelling controls stay illustrations (not focusable, never hit-tested).
+{
+  const rule=selector=>[...motionCss.matchAll(new RegExp(`(?:^|[{}/] )${selector.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')} \\{([^}]*)\\}`,'g'))].map(m=>m[1]).join(';');
+  const base=rule('html.motion .mk-btn'),focus=rule('html.motion .mk-btn:focus-visible'),dark=rule('html.motion .mk-btn-dark:focus-visible');
+  if(!/outline:2px solid transparent; outline-offset:2px;/.test(base)||!/outline-color:var\(--zt-brand-deep\);/.test(focus)||!/outline-color 90ms/.test(focus)||!/outline-color:var\(--zt-brand-strong\);/.test(dark)||/outline/.test(motionCss.replace(/html\.motion \.mk-btn(?:-dark)?:focus-visible \{[^}]*\}|html\.motion \.mk-btn \{ outline:2px solid transparent; outline-offset:2px; \}/g,''))) throw new Error('M21: foco visível dos botões (anel 2px, offset 2px, 90 ms, nunca animado para fora)');
+  if(/\.plan[\w-]*(?:\s[^{,]*)?:hover(?![^{]*\.mk-btn)/.test(motionCss)) throw new Error('M21: cartão de plano nunca anima no hover (só o botão)');
+  if((html.match(/<button\b/g)||[]).length!==1||/\btabindex=|<(?:input|select|textarea)\b/.test(html)||!/html\.motion \.ph-btns, html\.motion \.orc-actions \{ pointer-events:none; \}/.test(motionCss)) throw new Error('M21: controles do storytelling são ilustrativos (sem foco, pointer-events none)');
+}
+// Runtime budget: motion-boot.js + motion.js ≤ 16 KB gzip (hard ceiling of the budget amendment).
+{
+  const gzip=gzipSync(Buffer.concat([Buffer.from(motionFiles['site/motion-boot.js']||''),Buffer.from(motionJs)])).length;
+  if(gzip>16384) throw new Error(`Motion JS acima do teto: ${gzip} B gzip > 16384`);
 }
 // F2.6: approved CSS and markup are immutable, apart from the two external scripts.
 const normalizedHash=source=>sha256(Buffer.from(source.replace(/\r\n/g,'\n')));
