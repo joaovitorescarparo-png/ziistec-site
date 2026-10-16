@@ -723,7 +723,11 @@
   // shared IntersectionObserver (line at 85% of the viewport), WAAPI only, no requestAnimationFrame and
   // no CSS start state: without JS nothing is ever hidden. A block on screen or passed at init (reload,
   // anchor), passed by a jump, or met again from above is final; so is everything under reduced motion.
-  const root = document.documentElement;
+  const root = document.documentElement, nav = document.querySelector('.mk-nav');
+  // M21: the mobile menu animates only once a visitor uses the page, never when a breakpoint change
+  // (window resize, tablet rotation) shows or hides the panel; script.js keeps toggling and focus.
+  for (const type of ['click', 'keydown']) addEventListener(type, () => nav?.setAttribute('data-mo-menu', ''), true);
+  for (const q of ['(max-width: 1023px)', '(max-width: 639px)']) matchMedia(q).addEventListener('change', () => nav?.removeAttribute('data-mo-menu'));
   if (!window.IntersectionObserver || !document.querySelector('.mk-cta')) return;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const emphasis = 'cubic-bezier(0.16,1,0.3,1)', standard = 'cubic-bezier(0.2,0,0,1)';

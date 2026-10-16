@@ -189,16 +189,20 @@ html.motion.motion-pending .mk-hero-title { translate:0 16px; }
   html.motion .mk-nav-links a:hover::after { scale:1 1; }
 }
 /* Mobile menu (script.js only toggles .is-open and keeps focus): opens in 240 ms from 8px above,
-   closes in 160 ms; display stays until the exit ends. 640–1023 the panel is the links list. */
+   closes in 160 ms; display stays until the exit ends. 640–1023 the panel is the links list. Timed
+   only under [data-mo-menu] (set by motion.js on use, cleared on a breakpoint change), so a resize or
+   rotation never fades the panel in or out. */
 @media (min-width: 640px) and (max-width: 1023px) and (prefers-reduced-motion: no-preference) {
-  html.motion .mk-nav-links { opacity:0; translate:0 -8px; transition:opacity 160ms var(--zt-ease-standard), translate 160ms var(--zt-ease-standard), display 160ms allow-discrete; }
+  html.motion .mk-nav-links { opacity:0; translate:0 -8px; }
+  html.motion .mk-nav[data-mo-menu] .mk-nav-links { transition:opacity 160ms var(--zt-ease-standard), translate 160ms var(--zt-ease-standard), display 160ms allow-discrete; }
   html.motion .mk-nav.is-open .mk-nav-links { opacity:1; translate:0 0; transition-duration:240ms; }
   @starting-style {
     html.motion .mk-nav.is-open .mk-nav-links { opacity:0; translate:0 -8px; }
   }
 }
 @media (max-width: 639px) and (prefers-reduced-motion: no-preference) {
-  html.motion .mk-nav { opacity:0; translate:0 -8px; transition:opacity 160ms var(--zt-ease-standard), translate 160ms var(--zt-ease-standard), display 160ms allow-discrete; }
+  html.motion .mk-nav { opacity:0; translate:0 -8px; }
+  html.motion .mk-nav[data-mo-menu] { transition:opacity 160ms var(--zt-ease-standard), translate 160ms var(--zt-ease-standard), display 160ms allow-discrete; }
   html.motion .mk-nav.is-open { opacity:1; translate:0 0; transition-duration:240ms; }
   @starting-style {
     html.motion .mk-nav.is-open { opacity:0; translate:0 -8px; }
