@@ -629,7 +629,15 @@
       L.push([p4.querySelector('.tl-now'), [{ scale: '0' }, { scale: '1' }], 1600, 240]);
       p4.querySelectorAll('.ph-check').forEach((el, n) => L.push([el, [{ opacity: 0, scale: '0.6' }, { opacity: 1, scale: '1' }], 1650 + 70 * n, 240]));
       qa('.scene-cap').forEach(el => L.push([el, FADE, 1850, 240]));
-    } else return null;
+    } else {
+      // M17 · Office 05–06: OS #0248 arrives in the Financeiro summary (carrier, see play), the bars grow
+      // once, R$ 2.000 then R$ 420 on their own lines, the history card rises from below (never over them).
+      const lines = qa('.fin-line');
+      L.push([q('.scene-win-fin'), Y(24), 0, 520, emphasis], [q('.fin-os b'), FADE, 600, 200], [q('.fin-figs'), FADE, 400, 320]);
+      qa('.fin-bar').forEach((el, n) => L.push([el, [{ scale: '1 0' }, { scale: '1 1' }], 500 + 70 * n, 250]));
+      L.push([lines[0], Y(8), 1000, 320], [lines[1], Y(8), 1140, 320], [q('.hist-card'), Y(32), 1400, 520, emphasis]);
+      qa('.hc-ev').forEach((el, n) => L.push([el, Y(8), 1700 + 70 * n, 320]));
+    }
     return L.filter(step => step[0]);
   }
   function stop(i) {
@@ -665,6 +673,11 @@
     if (i === 1) {
       const head = box(s.querySelector('.scene-phone-03 .ph-head')), k = s.querySelector('.scene-phone-03 .ph').getBoundingClientRect().width / 300 / (small.matches ? 0.76 : 1);
       fly(i, s.querySelector('.scene-phone-03'), devices[1], '.ph-head', { x: head.x, y: head.y - 48 * k, h: head.h * 1.15 }, head, 0);
+    }
+    if (i === 2) {
+      // The OS code of the field phone, from the top edge of the scene into the .fin-os title.
+      const title = box(s.querySelector('.fin-os b')), top = box(devices[2]).y, k = small.matches ? 1 : s.querySelector('.app-scene').getBoundingClientRect().width / 680;
+      fly(i, scenes[1].querySelector('.scene-phone-04 .ph-code'), devices[2], null, { x: title.x, y: top - 48 * k, h: title.h }, title, 120);
     }
     st[i].fx.push(...steps.map(([el, keys, delay, duration, easing = standard]) => el.animate(keys, { delay, duration, easing, fill: 'backwards' })));
   }
