@@ -778,6 +778,10 @@
     final(u);
     u.fx = steps(u, k).map(([el, keys, delay, duration, easing = standard, pseudoElement]) => el.animate(keys, { delay, duration, easing, fill: 'backwards', pseudoElement }));
   }
+  // Every layout read happens before any write, so no reveal forces a synchronous style/layout pass.
+  const tops = () => new Map(units.filter(v => !v.done).map(v => [v, v.el.getBoundingClientRect().top]));
+  // A held block that a resize or a jump moved above the line without crossing it (no entry) is final.
+  const sweep = (top = tops()) => top.forEach((t, v) => !v.done && t < innerHeight * 0.85 && final(v));
   function settle() {
     io?.disconnect();
     io = null;
@@ -785,29 +789,36 @@
   }
   function start() {
     if (reduced.matches || !root.classList.contains('motion')) return settle();
-    const end = root.scrollHeight - innerHeight * 0.15;
+    const end = root.scrollHeight - innerHeight * 0.15, line = innerHeight * 0.85 + 48;
     io = new IntersectionObserver(entries => {
+      const top = tops();
       for (const e of entries) {
-        const u = units.find(v => v.el === e.target), seen = u.seen, line = innerHeight * 0.85 + 48;
+        const u = units.find(v => v.el === e.target), seen = u.seen;
         u.seen = true;
         if (u.done) continue;
         // Plays only when it rises from below into the line, with the blocks of its group that reach
         // the line in the same row; anything else that reaches the root is final, never hidden.
         if (e.isIntersecting && seen && e.boundingClientRect.top >= 0) {
-          units.filter(v => v.g === u.g && !v.done && (v === u || (t => t >= 0 && t < line)(v.el.getBoundingClientRect().top))).forEach(play);
+          units.filter(v => v.g === u.g && !v.done && (v === u || top.get(v) >= 0 && top.get(v) < line)).forEach(play);
         } else if (e.isIntersecting || e.boundingClientRect.top < 0) final(u);
       }
+      sweep(top);
     }, { rootMargin: '0px 0px -15% 0px' });
-    for (const u of units) {
+    const held = units.filter(u => {
       const r = u.el.getBoundingClientRect();
       // Held only when wholly below the viewport, laid out, and able to reach the line at all.
       if (r.top < innerHeight || !r.height || r.top + scrollY > end) final(u);
-      else {
-        u.fx = steps(u).map(([el, keys, , , , pseudoElement]) => el.animate([keys[0], keys[0]], { duration: 1, fill: 'both', pseudoElement }));
-        io.observe(u.el);
-      }
-    }
+      return !u.done;
+    });
+    const plans = held.map(u => steps(u));
+    held.forEach((u, i) => {
+      u.fx = plans[i].map(([el, keys, , , , pseudoElement]) => el.animate([keys[0], keys[0]], { duration: 1, fill: 'both', pseudoElement }));
+      io.observe(u.el);
+    });
   }
   reduced.addEventListener('change', settle);
+  addEventListener('resize', () => io && sweep(), { passive: true });
+  // Keyboard focus never lands on a held or fading control: focus inside a section makes it final.
+  addEventListener('focusin', e => units.forEach(v => !v.done && v.el.closest('section') === e.target.closest?.('section') && final(v)));
   document.fonts.ready.then(start);
 })();

@@ -280,6 +280,8 @@ if(/data-flow-scene/.test(motionJs)){
   if(/requestAnimationFrame|ziisMotion|iterations|addEventListener\(\s*['"](?:scroll|wheel|touch)/.test(sections)) throw new Error('M18: revelações secundárias sem RAF, scheduler ou listener de scroll');
   if(!sections.includes('if (u.done) continue;')||!sections.includes('u.done = true;')||!sections.includes('io?.unobserve(u.el);')) throw new Error('M18: cada bloco revela uma única vez (done + unobserve)');
   if(!sections.includes('else if (e.isIntersecting || e.boundingClientRect.top < 0) final(u);')||!sections.includes('if (r.top < innerHeight || !r.height || r.top + scrollY > end) final(u);')) throw new Error('M18: bloco passado, na tela, oculto ou inalcançável precisa ficar final (scroll rápido, reload, âncora)');
+  if(!sections.includes('      sweep(top);\n    }, { rootMargin')||!sections.includes("addEventListener('resize', () => io && sweep(), { passive: true });")) throw new Error('M18: bloco ultrapassado por resize/salto sem entry precisa ficar final (sweep)');
+  if(!sections.includes("addEventListener('focusin', e => units.forEach(v => !v.done && v.el.closest('section') === e.target.closest?.('section') && final(v)));")) throw new Error('M18: foco de teclado finaliza a seção (nunca em controle oculto)');
   if(!sections.includes("reduced.addEventListener('change', settle);")||!sections.includes("if (reduced.matches || !root.classList.contains('motion')) return settle();")) throw new Error('M18: reduced motion deixa todas as seções finais');
 }
 // M20: the final CTA title may reveal through a clip (below the fold), but only from JS on the shared
