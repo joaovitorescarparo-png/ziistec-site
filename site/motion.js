@@ -602,7 +602,8 @@
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const emphasis = 'cubic-bezier(0.16,1,0.3,1)', standard = 'cubic-bezier(0.2,0,0,1)';
   const devices = scenes.map(s => s.querySelector('.scene-device'));
-  const st = scenes.map(() => ({ done: false, fx: [] }));
+  const st = scenes.map(() => ({ done: false, fx: [], flies: [] }));
+  const small = matchMedia('(max-width: 639px)');
   let io = null;
   const Y = y => [{ opacity: 0, translate: `0 ${y}px` }, { opacity: 1, translate: '0 0' }];
   const FADE = [{ opacity: 0 }, { opacity: 1 }];
@@ -617,12 +618,40 @@
         [q('.scene-win'), Y(24), 800, 520, emphasis]);
       [qa('.scr-head, .scr-title, .scr-sub'), ...qa('.os-field')].forEach((els, n) => [].concat(els).forEach(el => L.push([el, Y(8), 1000 + 70 * n, 320])));
       L.push([q('.os-field.is-accent .os-val'), FADE, 1400, 240], [q('.scene-toast'), [{ opacity: 0, translate: '-16px 0' }, { opacity: 1, translate: '0 0' }], 1500, 420]);
+    } else if (i === 1) {
+      // M16 · Field 03–04: OS #0248 · Atribuída drops in from the top edge (carrier, see play), phone 03
+      // fills, phone 04 comes in front, turns amber, its timeline builds. No value on either phone.
+      const p3 = q('.scene-phone-03'), p4 = q('.scene-phone-04');
+      L.push([p3.querySelector('.ph-head'), FADE, 480, 160], [p3, Y(24), 80, 520]);
+      p3.querySelectorAll('.ph-title, .ph-addr, .ph-time, .ph-panel').forEach((el, n) => L.push([el, Y(8), 500 + 70 * n, 320]));
+      L.push([p4, [{ opacity: 0, translate: '24px 0' }, { opacity: 1, translate: '0 0' }], 900, 520], [p4.querySelector('.ph-head .ui-pill'), [{ opacity: 0, scale: '0.96' }, { opacity: 1, scale: '1' }], 1200, 240]);
+      p4.querySelectorAll('.tl-item').forEach((el, n) => L.push([el, Y(8), 1300 + 120 * n, 320]));
+      L.push([p4.querySelector('.tl-now'), [{ scale: '0' }, { scale: '1' }], 1600, 240]);
+      p4.querySelectorAll('.ph-check').forEach((el, n) => L.push([el, [{ opacity: 0, scale: '0.6' }, { opacity: 1, scale: '1' }], 1650 + 70 * n, 240]));
+      qa('.scene-cap').forEach(el => L.push([el, FADE, 1850, 240]));
     } else return null;
     return L.filter(step => step[0]);
   }
   function stop(i) {
     for (const a of st[i].fx) a.cancel();
+    for (const c of st[i].flies) c.remove();
     st[i].fx = [];
+    st[i].flies = [];
+  }
+  // Carrier: an aria-hidden copy of `src` in `holder`; its `inner` element travels from box `from` to
+  // box `to` (screen px; the scale follows the heights), then hands over to the real element.
+  const box = el => { const r = el.getBoundingClientRect(); return { x: r.x, y: r.y, h: r.height }; };
+  function fly(i, src, holder, inner, from, to, delay) {
+    const c = src.cloneNode(true);
+    c.classList.add('mo-fly');
+    c.setAttribute('aria-hidden', 'true');
+    holder.append(c);
+    st[i].flies.push(c);
+    const b = box(c), e = inner ? box(c.querySelector(inner)) : b;
+    const at = r => { const k = r.h / e.h; return { translate: `${r.x - b.x - k * (e.x - b.x)}px ${r.y - b.y - k * (e.y - b.y)}px`, scale: `${k}` }; };
+    const fade = c.animate([{ opacity: 0 }, { opacity: 1, offset: 0.12 }, { opacity: 1, offset: 0.76 }, { opacity: 0 }], { delay, duration: 680, fill: 'both' });
+    st[i].fx.push(c.animate([at(from), at(to)], { delay, duration: 520, easing: emphasis, fill: 'both' }), fade);
+    fade.finished.then(() => c.remove(), () => {});
   }
   // Start state, held until the scene plays (or is made final).
   function prime(i) {
@@ -630,9 +659,14 @@
   }
   function play(i) {
     st[i].done = true;
-    const steps = plan(i);
+    const steps = plan(i), s = scenes[i];
     stop(i);
-    st[i].fx = steps.map(([el, keys, delay, duration, easing = standard]) => el.animate(keys, { delay, duration, easing, fill: 'backwards' }));
+    // Carriers measure the real targets at rest, before any start state is applied again.
+    if (i === 1) {
+      const head = box(s.querySelector('.scene-phone-03 .ph-head')), k = s.querySelector('.scene-phone-03 .ph').getBoundingClientRect().width / 300 / (small.matches ? 0.76 : 1);
+      fly(i, s.querySelector('.scene-phone-03'), devices[1], '.ph-head', { x: head.x, y: head.y - 48 * k, h: head.h * 1.15 }, head, 0);
+    }
+    st[i].fx.push(...steps.map(([el, keys, delay, duration, easing = standard]) => el.animate(keys, { delay, duration, easing, fill: 'backwards' })));
   }
   function final(i) {
     st[i].done = true;
