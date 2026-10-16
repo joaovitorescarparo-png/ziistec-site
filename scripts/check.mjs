@@ -281,6 +281,15 @@ if(/data-flow-scene/.test(motionJs)){
   if(!sections.includes('else if (e.isIntersecting || e.boundingClientRect.top < 0) final(u);')||!sections.includes('if (r.top < innerHeight || !r.height || r.top + scrollY > end) final(u);')) throw new Error('M18: bloco passado, na tela, oculto ou inalcançável precisa ficar final (scroll rápido, reload, âncora)');
   if(!sections.includes("reduced.addEventListener('change', settle);")||!sections.includes("if (reduced.matches || !root.classList.contains('motion')) return settle();")) throw new Error('M18: reduced motion deixa todas as seções finais');
 }
+// M19: the FAQ stays native <details>/<summary> (keyboard, semantics, screen readers, several open at
+// once). Motion is CSS only — no JS accordion or toggle handler — and the height transition exists only
+// where ::details-content + interpolate-size are supported (instant elsewhere).
+{
+  const code=source=>source.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,'');
+  if((html.match(/<details class="faq-item"(?: open)?><summary class="faq-q">/g)||[]).length!==6) throw new Error('M19: FAQ precisa continuar <details>/<summary> nativo');
+  if(/faq|<details|details-content|['"]toggle['"]|\.open\b|\bopen\s*=/i.test(code(motionJs))||/['"]toggle['"]|\.open\b|details/i.test(code(script))) throw new Error('M19: FAQ sem acordeão JS (nenhum handler de <details>)');
+  if(!/@supports \(interpolate-size: allow-keywords\) \{ html\.motion \.faq-item \{ interpolate-size:allow-keywords; \} html\.motion \.faq-item::details-content \{ block-size:0;[^}]*transition:block-size 240ms/.test(motionCss)) throw new Error('M19: altura do FAQ só via ::details-content + interpolate-size (240 ms)');
+}
 // F2.6: approved CSS and markup are immutable, apart from the two external scripts.
 const normalizedHash=source=>sha256(Buffer.from(source.replace(/\r\n/g,'\n')));
 if(normalizedHash(await read('site/v4/01-tokens.css'))!=='61e4a5bdf990eec0adf38acb14253d3e2e59dd59743b5aa98c2b31141e6487b8' || normalizedHash(await read('site/v4/02-home.css'))!=='9ffee1bfe508f2de710c41b4631c09dd8df358842bdfe140b3ee3033df10c159') throw new Error('F2 static CSS changed');

@@ -143,6 +143,20 @@ html.motion.motion-pending .mk-hero-title { translate:0 16px; }
   html.motion .audience-row { position:relative; border-top-color:transparent; }
   html.motion .audience-row::before { content:""; position:absolute; top:-1px; right:0; left:0; height:1px; background:var(--zt-divider-200); transform-origin:0 0; }
 }
+/* M19 FAQ: native <details>, no JS. Height 240 ms where ::details-content and interpolate-size exist,
+   instant elsewhere; the answer fades in 160 ms and the plus/minus turns 90° in 160 ms as it swaps. */
+@media (prefers-reduced-motion: no-preference) {
+  html.motion .faq-item[open] .faq-a { animation:mo-faq-fade 160ms var(--zt-ease-standard); }
+  html.motion .faq-item[open] .faq-minus,
+  html.motion .faq-item:not([open]) .faq-plus { animation:mo-faq-turn 160ms var(--zt-ease-standard); }
+  @supports (interpolate-size: allow-keywords) {
+    html.motion .faq-item { interpolate-size:allow-keywords; }
+    html.motion .faq-item::details-content { block-size:0; overflow-y:clip; transition:block-size 240ms var(--zt-ease-standard), content-visibility 240ms allow-discrete; }
+    html.motion .faq-item[open]::details-content { block-size:auto; }
+  }
+}
+@keyframes mo-faq-fade { from { opacity:0; } }
+@keyframes mo-faq-turn { from { rotate:-90deg; } }
 @media (prefers-reduced-motion: reduce) {
   .page-home {
     --mo-enter-lg:0ms;
