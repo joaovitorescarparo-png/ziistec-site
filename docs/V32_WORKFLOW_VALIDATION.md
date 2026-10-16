@@ -1,4 +1,4 @@
-# V3.2 workflow M06–M14
+# V3.2 workflow M06–M17
 
 Scope: M06 pin + track, M07 copy/numeral, M08 rail, M09 T12 and M10 T23 on
 `feat/homepage-v32-motion`, after `98c551c` (V3.2 HERO FOUNDATION — APPROVED).
@@ -175,6 +175,58 @@ Known limits and debt:
   are separate sticky layers, so a transparent incoming phone would otherwise
   show the incoming window's content through it.
 - Real-device pacing (laptops, Safari, trackpads) is still manual.
+
+## M15–M17 (responsive story below 1024 px)
+
+Below 1024 px there is no pin: the three approved scenes (Office 01–02, Field 03–04,
+Office 05–06) each play the frozen storyboard once, time-based, when their
+`.scene-device` crosses 80% of the viewport. One shared IntersectionObserver
+(`rootMargin: 0px 0px -20% 0px`), WAAPI only, no scroll listener or
+`requestAnimationFrame` of their own; native scroll is never touched.
+
+- Activation: `(max-width: 1023px)` only (not R2). ≥ 1024 px with a touch or
+  coarse pointer keeps the existing non-pinned desktop fallback; desktop never
+  creates the scene observer, holds or carriers.
+- Once per page view; a scene already reached when first seen (reload
+  mid-page, anchor, a fast scroll that passes it between two callbacks, or
+  met again from above) is final at once and never plays.
+- Start states are WAAPI holds applied after webfonts settle (no CSS start
+  state, so no-JS and failures stay static); crossing the breakpoint or
+  switching reduced motion cancels holds, running effects and carriers and
+  re-evaluates with one observer.
+- Carriers: the "OS #0248 · Atribuída" head (an `aria-hidden` copy of phone 03
+  with only its head drawn) drops 48 design px into phone 03; the field
+  phone's "OS #0248" code drops into the `.fin-os` title. Neither carries money.
+- History card: rises from 32 px lower, so its distance to R$ 2.000 / R$ 420
+  only shrinks to the approved final value.
+- Below 640 px `.scene-device-b` clips on x so phone 04's entrance and the chip
+  never add horizontal scroll (its box is the viewport width).
+
+Evidence (`validate-scenes.cjs`, Chromium headless):
+
+- 320×700, 330×700, 360×780, 390×844, 640×900, 768×1024, 1023×768: every scene
+  plays once going down; no replay going up or on a second pass; finished
+  scenes equal the static ones (max box delta 0.0005 px, opacity delta 0); no
+  R$ on the phones or in any carrier; never R$ 2.420; no horizontal scroll.
+- History clearance over the value lines, minimum at any frame: 32 px
+  (320–390), 26.37 px (640), 30.12 px (768, 1023); to the summary box 17 / 14.01 /
+  16 px (the approved static gaps).
+- Values never wrap; label/value gap ≥ 12 px (R$ 420 at 320/330: exactly 12 px).
+- Reload at Field and at Office 05–06, fast scroll past all scenes and back:
+  passed scenes final at once, zero plays. Reduced motion: no observer, no
+  holds, final; switched on mid-play: cancelled and final.
+- Breakpoint 1024 → 768: reached scenes final, the future one plays once, one
+  live observer; 768 → 1024 mid-play: mobile motion cancelled, pin restored.
+- Scroll through the three scenes: 0 long tasks, motion CLS 0; p50 16.7 ms,
+  p95 16.8 ms (CPU 1× and 4×), worst 33–67 ms.
+- Desktop unchanged (no line of M01–M14 changed): hero matrix 0 raw pixels at
+  7 sizes (below the scenes, boxes equal and raster recorded: Chromium paints
+  text after their composited start states with grayscale antialiasing), hero
+  behaviour 20/20, workflow validation passed; desktop build long task the same
+  as `c63e453` in paired runs.
+- `motion-boot.js` + `motion.js`: 13,593 B gzip, above the 12 KB target and
+  below the 16 KB ceiling: the three frozen storyboards (about 60 timed steps)
+  and two carriers. Not reduced by golfing.
 
 ## Runtime budget amendment 2 (approved)
 

@@ -263,6 +263,13 @@ if(/position:\s?sticky/.test(motionCss)){
   const titleCall=motionJs.split('\n').find(line=>line.includes("add('.mk-hero-title'"));
   if(titleRules.some(body=>/opacity:\s?0(?![.\d])|clip-path|visibility:\s?hidden/.test(body))||!titleCall||/clipPath|opacity:\s?0(?![.\d])/.test(titleCall)||!/opacity:\s?1\b/.test(titleCall)) throw new Error('Hero LCP: .mk-hero-title precisa ser visível desde o primeiro paint (sem opacity 0, clip-path ou máscara)');
 }
+// M15–M17: the three mobile scenes exist only below 1024 px, start from one shared observer at 80%
+// of the viewport and play once (each scene is unobserved after it plays or is made final).
+if(/data-flow-scene/.test(motionJs)){
+  if(!motionJs.includes("matchMedia('(max-width: 1023px)')")) throw new Error('M15–M17: cenas mobile precisam ficar abaixo de 1024 px');
+  if(!motionJs.includes("rootMargin: '0px 0px -20% 0px'")||(motionJs.match(/new IntersectionObserver\(/g)||[]).length!==2) throw new Error('M15–M17: um único observer compartilhado (rootMargin 0px 0px -20% 0px)');
+  if(!motionJs.includes('io.unobserve(devices[i])')) throw new Error('M15–M17: cada cena toca uma única vez (unobserve)');
+}
 // F2.6: approved CSS and markup are immutable, apart from the two external scripts.
 const normalizedHash=source=>sha256(Buffer.from(source.replace(/\r\n/g,'\n')));
 if(normalizedHash(await read('site/v4/01-tokens.css'))!=='61e4a5bdf990eec0adf38acb14253d3e2e59dd59743b5aa98c2b31141e6487b8' || normalizedHash(await read('site/v4/02-home.css'))!=='9ffee1bfe508f2de710c41b4631c09dd8df358842bdfe140b3ee3033df10c159') throw new Error('F2 static CSS changed');
