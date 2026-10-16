@@ -719,7 +719,7 @@
   document.fonts.ready.then(sync);
 })();
 (() => {
-  // M18: the secondary sections reveal once, much quieter than the Hero and the Workflow. One
+  // M18 + M20: the secondary sections reveal once, much quieter than the Hero and the Workflow. One
   // shared IntersectionObserver (line at 85% of the viewport), WAAPI only, no requestAnimationFrame and
   // no CSS start state: without JS nothing is ever hidden. A block on screen or passed at init (reload,
   // anchor), passed by a jump, or met again from above is final; so is everything under reduced motion.
@@ -747,7 +747,20 @@
     ['.testi-lead', (el, k, q = s => el.querySelector(s)) => [[q('.testi-lead-mark'), FADE, 0, 320], [q('.testi-lead-quote'), Y(16), 70, 520, emphasis], [q('.testi-lead-by'), Y(8), 310, 320]]],
     ['.testi-more .testi', (el, k) => [[el, Y(16), 70 * k, 420]]],
     // Profissional after Essencial, longer and with emphasis, then its badge; no card ever above scale 1.
-    ['.plan', (el, k) => el.matches('.plan-pro') ? [[el, Y(32), 160 * k, 520, emphasis], [el.querySelector('.plan-badge'), [{ opacity: 0, scale: '0.96' }, { opacity: 1, scale: '1' }], 160 * k + 520, 240]] : [[el, Y(16), 160 * k, 420]]]
+    ['.plan', (el, k) => el.matches('.plan-pro') ? [[el, Y(32), 160 * k, 520, emphasis], [el.querySelector('.plan-badge'), [{ opacity: 0, scale: '0.96' }, { opacity: 1, scale: '1' }], 160 * k + 520, 240]] : [[el, Y(16), 160 * k, 420]]],
+    // M20: the title is below the fold, so it may reveal through a clip; lead and button follow.
+    ['.cta-title', (el, k, s = el.parentNode) => [[el, [{ clipPath: 'inset(-10% -5% 100% -5%)' }, { clipPath: 'inset(-10% -5% -20% -5%)' }], 0, 640, emphasis],
+      [s.querySelector('.cta-lead'), Y(16), 240, 420], [s.querySelector('.cta-act'), Y(16), 310, 420]]],
+    // The rail replays once in 900 ms: the fill grows, each stop turns done as the fill passes it, the
+    // token slides from the first to the last stage. Time-based: no scheduler, pin or carrier.
+    ['.cta-rail', el => {
+      const tok = el.querySelector('.rail-token'), css = getComputedStyle(el), v = n => css.getPropertyValue(n);
+      const off = { border: `2px solid ${v('--zt-dark-border-strong')}`, backgroundColor: v('--zt-dark-surface-100') }, ink = { color: v('--zt-ink-muted') };
+      return [[el.querySelector('.rail-fill'), SX, 0, 900, 'linear'],
+        [tok, [{ translate: `${el.querySelector('.rail').getBoundingClientRect().left - 7 - tok.getBoundingClientRect().left}px 0` }, { translate: '0 0' }], 0, 900, 'linear'],
+        // Not done until the fill reaches it (constant hold for 180 ms per stage, then the static is-done).
+        ...all(el, '.rail-stop').flatMap((stop, j) => [[stop.querySelector('i'), [off, off], 0, 180 * j], ...all(stop, 'span, b').map(t => [t, [ink, ink], 0, 180 * j])])];
+    }]
   ];
   const units = GROUPS.flatMap(([sel, plan], g) => [...document.querySelectorAll(sel)].map(el => ({ el, g, plan, fx: [], done: false, seen: false })));
   const steps = (u, k = 0) => u.plan(u.el, k).filter(s => s[0]);

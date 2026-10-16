@@ -281,6 +281,14 @@ if(/data-flow-scene/.test(motionJs)){
   if(!sections.includes('else if (e.isIntersecting || e.boundingClientRect.top < 0) final(u);')||!sections.includes('if (r.top < innerHeight || !r.height || r.top + scrollY > end) final(u);')) throw new Error('M18: bloco passado, na tela, oculto ou inalcançável precisa ficar final (scroll rápido, reload, âncora)');
   if(!sections.includes("reduced.addEventListener('change', settle);")||!sections.includes("if (reduced.matches || !root.classList.contains('motion')) return settle();")) throw new Error('M18: reduced motion deixa todas as seções finais');
 }
+// M20: the final CTA title may reveal through a clip (below the fold), but only from JS on the shared
+// observer — never a CSS start state, so no-JS, reduced motion, reload, anchor or a JS error leave it
+// visible. The rail replays once, time-based (no scheduler, pin or carrier), and never changes display.
+{
+  const ctaRules=[...motionCss.matchAll(/([^{}]*\.cta-(?:title|lead|act|rail)[^{}]*)\{([^}]*)\}/g)];
+  if(ctaRules.some(([,selector,body])=>/opacity:\s?0(?![.\d])|clip-path|visibility:\s?hidden|display:/.test(body)||/::?before|::?after/.test(selector)&&!/rail-fill/.test(selector))) throw new Error('M20: CTA final sem estado inicial em CSS (título, lead, botão e rail visíveis sem JS)');
+  if((motionJs.match(/\['\.cta-title'/g)||[]).length!==1||(motionJs.match(/\['\.cta-rail'/g)||[]).length!==1||/\.cta-rail[^\n]*(?:mo-carrier|mo-fly|ziisMotion)/.test(motionJs)) throw new Error('M20: rail do CTA toca uma única vez, no observer compartilhado, sem scheduler ou carriers');
+}
 // M19: the FAQ stays native <details>/<summary> (keyboard, semantics, screen readers, several open at
 // once). Motion is CSS only — no JS accordion or toggle handler — and the height transition exists only
 // where ::details-content + interpolate-size are supported (instant elsewhere).

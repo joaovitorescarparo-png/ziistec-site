@@ -134,7 +134,7 @@ html.motion.motion-pending .mk-hero-title { translate:0 16px; }
     html.motion .flow-devices { --fk:min(tan(atan2(100cqw - 414px,824px)),tan(atan2(100vh - 162px,586px))); }
   }
 }
-/* M18 secondary reveals: origins only, plus the audience rule redrawn as a pseudo line on the
+/* M18 · M20 secondary reveals: origins only, plus the audience rule redrawn as a pseudo line on the
    exact pixels of the static border so it can draw. No start state lives here: motion.js holds blocks
    with WAAPI only while they wait below the viewport. */
 @media (prefers-reduced-motion: no-preference) {
@@ -142,6 +142,7 @@ html.motion.motion-pending .mk-hero-title { translate:0 16px; }
   html.motion .problem-arrow-d { transform-origin:50% 0; }
   html.motion .audience-row { position:relative; border-top-color:transparent; }
   html.motion .audience-row::before { content:""; position:absolute; top:-1px; right:0; left:0; height:1px; background:var(--zt-divider-200); transform-origin:0 0; }
+  html.motion .cta-rail .rail-fill { transform-origin:0 0; }
 }
 /* M19 FAQ: native <details>, no JS. Height 240 ms where ::details-content and interpolate-size exist,
    instant elsewhere; the answer fades in 160 ms and the plus/minus turns 90° in 160 ms as it swaps. */
