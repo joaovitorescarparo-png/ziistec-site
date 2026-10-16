@@ -88,6 +88,10 @@ html.motion.motion-pending .mk-hero-title { translate:0 16px; }
   html.motion .mo-carrier.mo-sale { background:none; border-color:transparent; }
   html.motion .mo-carrier.mo-sale > :not(.ui-val) { visibility:hidden; }
 }
+/* M15–M17: below 1024 px the three scenes play once (no pin); transform origins only. */
+@media (max-width: 1023px) and (prefers-reduced-motion: no-preference) {
+  html.motion .scene-seg > i { transform-origin:0 50%; }
+}
 /* Stage composition inside the 100svh pin. */
 @media (hover: hover) and (pointer: fine) and (min-width: 1280px) and (min-height: 900px) and (prefers-reduced-motion: no-preference) {
   html.motion .flow-frame-inner { height:900px; top:calc((100% - 900px) / 2); }

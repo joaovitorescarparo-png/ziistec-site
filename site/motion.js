@@ -590,3 +590,81 @@
   Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 400))]).then(resync);
   document.fonts.addEventListener('loadingdone', resync);
 })();
+(() => {
+  // M15–M17: below 1024 px (no pin) each of the three approved scenes plays one short, time-based
+  // sequence when its device crosses 80% of the viewport. Native scroll is never touched: one shared
+  // IntersectionObserver, WAAPI only, no requestAnimationFrame. Every scene plays once per page view;
+  // a scene already reached when it is first seen (reload mid-page, anchor, fast scroll) is final.
+  const root = document.documentElement;
+  const scenes = window.IntersectionObserver ? [...document.querySelectorAll('[data-flow-scene]')] : [];
+  if (scenes.length !== 3) return;
+  const narrow = matchMedia('(max-width: 1023px)');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+  const emphasis = 'cubic-bezier(0.16,1,0.3,1)', standard = 'cubic-bezier(0.2,0,0,1)';
+  const devices = scenes.map(s => s.querySelector('.scene-device'));
+  const st = scenes.map(() => ({ done: false, fx: [] }));
+  let io = null;
+  const Y = y => [{ opacity: 0, translate: `0 ${y}px` }, { opacity: 1, translate: '0 0' }];
+  const FADE = [{ opacity: 0 }, { opacity: 1 }];
+  // The approved storyboards: [element, keyframes, delay, duration, easing].
+  function plan(i) {
+    const s = scenes[i], q = sel => s.querySelector(sel), qa = sel => [...s.querySelectorAll(sel)];
+    const L = qa('.scene-seg .is-now').map(el => [el, [{ scale: '0 1' }, { scale: '1 1' }], 0, 420]);
+    [q('.scene-head'), ...qa('.scene-step')].forEach((el, n) => L.push([el, Y(12), 70 * n, 420]));
+    if (i === 0) {
+      // M15 · Office 01–02: the approved quote, then the OS created from it.
+      L.push([q('.orc-card'), Y(16), 120, 420, emphasis], [q('.orc-card .ui-pill'), [{ opacity: 0, scale: '0.9' }, { opacity: 1, scale: '1' }], 600, 240],
+        [q('.scene-win'), Y(24), 800, 520, emphasis]);
+      [qa('.scr-head, .scr-title, .scr-sub'), ...qa('.os-field')].forEach((els, n) => [].concat(els).forEach(el => L.push([el, Y(8), 1000 + 70 * n, 320])));
+      L.push([q('.os-field.is-accent .os-val'), FADE, 1400, 240], [q('.scene-toast'), [{ opacity: 0, translate: '-16px 0' }, { opacity: 1, translate: '0 0' }], 1500, 420]);
+    } else return null;
+    return L.filter(step => step[0]);
+  }
+  function stop(i) {
+    for (const a of st[i].fx) a.cancel();
+    st[i].fx = [];
+  }
+  // Start state, held until the scene plays (or is made final).
+  function prime(i) {
+    st[i].fx = plan(i).map(([el, keys]) => el.animate([keys[0], keys[0]], { duration: 1, fill: 'both' }));
+  }
+  function play(i) {
+    st[i].done = true;
+    const steps = plan(i);
+    stop(i);
+    st[i].fx = steps.map(([el, keys, delay, duration, easing = standard]) => el.animate(keys, { delay, duration, easing, fill: 'backwards' }));
+  }
+  function final(i) {
+    st[i].done = true;
+    stop(i);
+  }
+  function sync() {
+    const live = narrow.matches && !reduced.matches && root.classList.contains('motion');
+    io?.disconnect();
+    io = null;
+    scenes.forEach((_, i) => { if (!st[i].done || !live) stop(i); });
+    if (!live) return;
+    const first = new Set();
+    io = new IntersectionObserver(entries => {
+      for (const e of entries) {
+        const i = devices.indexOf(e.target), seen = first.has(i);
+        first.add(i);
+        if (st[i].done) continue;
+        // Reached already when first seen, or passed between two callbacks: final, never hidden.
+        if (e.isIntersecting && seen) play(i);
+        else if (e.isIntersecting || e.boundingClientRect.top < 0) final(i);
+        else continue;
+        io.unobserve(e.target);
+      }
+    }, { rootMargin: '0px 0px -20% 0px' });
+    scenes.forEach((_, i) => {
+      if (st[i].done || !plan(i)) return;
+      if (devices[i].getBoundingClientRect().top < innerHeight * 0.8) return final(i);
+      prime(i);
+      io.observe(devices[i]);
+    });
+  }
+  narrow.addEventListener('change', sync);
+  reduced.addEventListener('change', sync);
+  sync();
+})();
