@@ -275,7 +275,7 @@ if(/data-flow-scene/.test(motionJs)){
 // the M15–M17 scenes and the workflow's coarse-pointer fallback), WAAPI only — no scroll scheduler, no
 // requestAnimationFrame. Each block plays once; a block on screen, passed or unreachable is final.
 {
-  const sections=motionJs.slice(motionJs.lastIndexOf('(() => {')).replace(/^\s*\/\/.*$/gm,'');
+  const sections=motionJs.slice(motionJs.lastIndexOf('(() => {')).replace(/\r\n/g,'\n').replace(/^\s*\/\/.*$/gm,'');
   if((motionJs.match(/new IntersectionObserver\(/g)||[]).length!==3||(sections.match(/new IntersectionObserver\(/g)||[]).length!==1||!sections.includes("rootMargin: '0px 0px -15% 0px'")) throw new Error('M18: um único observer compartilhado para as seções (rootMargin 0px 0px -15% 0px)');
   if(/requestAnimationFrame|ziisMotion|iterations|addEventListener\(\s*['"](?:scroll|wheel|touch)/.test(sections)) throw new Error('M18: revelações secundárias sem RAF, scheduler ou listener de scroll');
   if(!sections.includes('if (u.done) continue;')||!sections.includes('u.done = true;')||!sections.includes('io?.unobserve(u.el);')) throw new Error('M18: cada bloco revela uma única vez (done + unobserve)');

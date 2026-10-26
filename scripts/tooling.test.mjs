@@ -255,18 +255,19 @@ const regressions = [
   ['M18 revelação secundária repete (replay)', 'check.mjs', /M18: cada bloco revela uma única vez/, (d) => edit(d, 'site/motion.js', (s) => s.replace('if (u.done) continue;', 'void u;'))],
   ['M18 conteúdo oculto após scroll rápido', 'check.mjs', /M18: bloco passado/, (d) => edit(d, 'site/motion.js', (s) => s.replace('else if (e.isIntersecting || e.boundingClientRect.top < 0) final(u);', 'else if (e.isIntersecting) final(u);'))],
   ['M18 conteúdo oculto no reload no meio da página', 'check.mjs', /M18: bloco passado/, (d) => edit(d, 'site/motion.js', (s) => s.replace('if (r.top < innerHeight || !r.height || r.top + scrollY > end) final(u);', 'if (r.top < 0) final(u);'))],
-  ['M18 estado inicial sobrevive a breakpoint', 'check.mjs', /M18: bloco ultrapassado por resize/, (d) => edit(d, 'site/motion.js', (s) => s.replace("  addEventListener('resize', () => io && sweep(), { passive: true });\n", ''))],
+  ['M18 estado inicial sobrevive a breakpoint', 'check.mjs', /M18: bloco ultrapassado por resize/, (d) => edit(d, 'site/motion.js', (s) => s.replace(/  addEventListener\('resize', \(\) => io && sweep\(\), \{ passive: true \}\);\r?\n/, ''))],
+  ['M18 sweep ausente no callback', 'check.mjs', /M18: bloco ultrapassado por resize/, (d) => edit(d, 'site/motion.js', (s) => s.replace(/      sweep\(top\);\r?\n/, ''))],
   ['M18 foco de teclado em controle oculto', 'check.mjs', /M18: foco de teclado/, (d) => edit(d, 'site/motion.js', (s) => s.replace(/  addEventListener\('focusin'[^\n]*\n/, ''))],
   ['M18 observer por seção', 'check.mjs', /M18: um único observer/, (d) => edit(d, 'site/motion.js', (s) => s + "\n(() => { new IntersectionObserver(() => {}, { rootMargin: '0px 0px -15% 0px' }); })();\n")],
-  ['M18 revelação no scheduler (RAF)', 'check.mjs', /M18: revelações secundárias sem RAF|M10 scheduler/, (d) => edit(d, 'site/motion.js', (s) => s.replace('  document.fonts.ready.then(start);\n})();\n', '  document.fonts.ready.then(() => requestAnimationFrame(start));\n})();\n'))],
+  ['M18 revelação no scheduler (RAF)', 'check.mjs', /M18: revelações secundárias sem RAF|M10 scheduler/, (d) => edit(d, 'site/motion.js', (s) => s.replace(/  document.fonts.ready.then\(start\);(\r?\n)\}\)\(\);\r?\n/, '  document.fonts.ready.then(() => requestAnimationFrame(start));$1})();$1'))],
   ['M18 reduced motion não finaliza seções', 'check.mjs', /M18: reduced motion/, (d) => edit(d, 'site/motion.js', (s) => s.replace("reduced.addEventListener('change', settle);", ''))],
   ['M19 FAQ perde <details> nativo', 'check.mjs', /FAQ precisa ter exatamente 6|M19: FAQ precisa continuar/, (d) => edit(d, 'site/index.html', (s) => s.replace('<details class="faq-item"><summary class="faq-q">', '<div class="faq-item"><summary class="faq-q">'))],
   ['M19 FAQ vira acordeão JS', 'check.mjs', /M19: FAQ sem acordeão JS/, (d) => edit(d, 'site/motion.js', (s) => s + "\nfor (const d of document.querySelectorAll('.faq-item')) d.addEventListener('toggle', () => {});\n")],
   ['M19 altura do FAQ sem @supports', 'check.mjs', /M19: altura do FAQ/, (d) => edit(d, 'site/v4/03-motion.css', (s) => s.replace('@supports (interpolate-size: allow-keywords) {', '@supports (display: block) {'))],
   ['M20 rail do CTA toca duas vezes', 'check.mjs', /M20: rail do CTA toca uma única vez/, (d) => edit(d, 'site/motion.js', (s) => s.replace("    ['.cta-rail', el => {", "    ['.cta-rail', el => []],\n    ['.cta-rail', el => {"))],
-  ['M20 rail do CTA repete ao voltar', 'check.mjs', /M18: cada bloco revela uma única vez/, (d) => edit(d, 'site/motion.js', (s) => s.replace('    u.done = true;\n', ''))],
+  ['M20 rail do CTA repete ao voltar', 'check.mjs', /M18: cada bloco revela uma única vez/, (d) => edit(d, 'site/motion.js', (s) => s.replace(/    u.done = true;\r?\n/, ''))],
   ['M20 título do CTA oculto em CSS', 'check.mjs', /M20: CTA final sem estado inicial/, (d) => edit(d, 'site/v4/03-motion.css', (s) => s.replace('  html.motion .cta-rail .rail-fill { transform-origin:0 0; }', '  html.motion .cta-rail .rail-fill { transform-origin:0 0; }\n  html.motion .cta-title { clip-path:inset(0 0 100% 0); }'))],
-  ['M21 focus-visible removido', 'check.mjs', /M21: foco visível/, (d) => edit(d, 'site/v4/03-motion.css', (s) => s.replace(/  html\.motion \.mk-btn:focus-visible \{[^}]*\}\n/, ''))],
+  ['M21 focus-visible removido', 'check.mjs', /M21: foco visível/, (d) => edit(d, 'site/v4/03-motion.css', (s) => s.replace(/  html\.motion \.mk-btn:focus-visible \{[^}]*\}\r?\n/, ''))],
   ['M21 anel de foco animado para fora', 'check.mjs', /M21: foco visível/, (d) => edit(d, 'site/v4/03-motion.css', (s) => s.replace('html.motion .mk-btn { transition:background-color 160ms', 'html.motion .mk-btn { transition:outline-color 160ms var(--zt-ease-standard), background-color 160ms'))],
   ['M21 foco com outline zerado', 'check.mjs', /M21: foco visível/, (d) => edit(d, 'site/v4/03-motion.css', (s) => s.replace('html.motion .mk-btn-dark:focus-visible { outline-color:var(--zt-brand-strong); }', 'html.motion .mk-btn-dark:focus-visible { outline-color:var(--zt-brand-strong); }\n  html.motion .cta-button:focus { outline:0; }'))],
   ['M21 cartão de plano anima no hover', 'check.mjs', /M21: cartão de plano/, (d) => edit(d, 'site/v4/03-motion.css', (s) => s.replace('  html.motion .faq-q:hover { color:var(--zt-brand-deep); }', '  html.motion .faq-q:hover { color:var(--zt-brand-deep); }\n  html.motion .plan-pro:hover { translate:0 -4px; }'))],
@@ -287,6 +288,36 @@ const regressions = [
   ['etapa do fluxo removida', 'check.mjs', /Etapa 5 do fluxo ausente/, (d) => edit(d, 'site/index.html', (s) => s.replaceAll('data-flow-stage="5"', 'data-flow-stage="x"'))],
   ['suíte de tooling fora do npm run check', 'check.mjs', /suíte de tooling/, (d) => edit(d, 'package.json', (s) => s.replace(' && node --test scripts/tooling.test.mjs', ''))],
 ];
+
+// Exercise the actual gate and mutations in both checkout formats, independently of Git autocrlf.
+for (const [label, eol] of [['LF', '\n'], ['CRLF', '\r\n']]) {
+  const format = async dir => {
+    for (const file of ['site/motion.js', 'site/v4/03-motion.css']) {
+      await edit(dir, file, s => s.replace(/\r\n/g, '\n').replace(/\n/g, eol));
+    }
+  };
+  test(`M18 gate accepts intact ${label} sources`, async () => {
+    await withCopy(format, async dir => {
+      const result = run('check.mjs', tmpdir(), dir);
+      assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+    });
+  });
+  for (const [name, script, expected, mutate] of regressions.filter(([name]) =>
+    name.startsWith('M18 ') || name === 'M20 rail do CTA repete ao voltar' || name === 'M21 focus-visible removido')) {
+    test(`${label} mutation: ${name}`, async () => {
+      await withCopy(format, async dir => {
+        const files = ['site/motion.js', 'site/v4/03-motion.css'];
+        const before = await Promise.all(files.map(file => readFile(join(dir, file), 'utf8')));
+        await mutate(dir);
+        const after = await Promise.all(files.map(file => readFile(join(dir, file), 'utf8')));
+        assert.notDeepEqual(after, before, 'Mutation must change its fixture');
+        const result = run(script, tmpdir(), dir);
+        assert.notEqual(result.status, 0, `${script} should reject ${label} mutation`);
+        assert.match(`${result.stdout}\n${result.stderr}`, expected);
+      });
+    });
+  }
+}
 
 for (const [name, script, expected, mutate] of regressions) {
   test(`gate reprova: ${name}`, async () => {
