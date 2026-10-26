@@ -34,7 +34,10 @@ empty; the M15 gate now counts the scenes observer by its rootMargin).
   +310 ms. The rail replays once in 900 ms (time-based): fill scaleX 0 → 1,
   each stop held "not done" until the fill passes it (180 ms per stage), token
   slides first → last stage. No scheduler, pin or carrier; final wherever the
-  static layout hides it (< 1024) and under reduced motion.
+  static layout hides it (< 1024) and under reduced motion. This refers only
+  to the desktop `.cta-rail`: below 1024 px the approved static layout shows
+  a separate `.cta-rail-mo` (six dots, History and completed OS). M20 does not
+  animate that mobile rail or change either rail's display rule.
 - **M21 microinteractions** (CSS, `html.motion` + no-preference). Buttons time
   the approved static hover states in 160 ms (arrow +2 px on primary/dark,
   faint tint on secondary), press 0.98 in 90 ms; focus ring 2 px, offset 2 px,
