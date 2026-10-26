@@ -194,7 +194,8 @@
         cur = s.to;
       }
       keys.push({ offset: 1, [prop]: cur });
-      const animation = (el.pseudo ? el.el : el).animate(keys, { duration: SPAN * 1000, fill: 'both', pseudoElement: el.pseudo });
+      const pseudo = typeof el.pseudo === 'string' ? el.pseudo : undefined;
+      const animation = (pseudo ? el.el : el).animate(keys, { duration: SPAN * 1000, fill: 'both', pseudoElement: pseudo });
       animation.pause();
       anims.push(animation);
     }

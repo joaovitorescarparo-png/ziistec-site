@@ -79,6 +79,32 @@ function run(script, cwd, scriptRoot = root) {
   return spawnSync(process.execPath, [join(scriptRoot, 'scripts', script)], { cwd, encoding: 'utf8' });
 }
 
+test('workflow compiler distinguishes descriptors from native Element.pseudo()', async () => {
+  const source = await readFile(join(root, 'site/motion.js'), 'utf8');
+  const compiler = source.slice(source.indexOf('  function compile() {'), source.indexOf('  // Carrier:'));
+  assert.ok(compiler.includes('function compile()'));
+  function exercise(code, nativePseudo) {
+    const calls = [], anims = [];
+    const prototype = nativePseudo ? { pseudo() { throw new Error('native pseudo must not be called'); } } : {};
+    const element = Object.assign(Object.create(prototype), { animate(keys, options) {
+      calls.push({ keys, options }); return { pause() {} };
+    } });
+    const props = () => ({ opacity: [{ a: 0, b: 1, from: '0', to: '1', ease: 'linear' }] });
+    vm.runInNewContext(code + '\ncompile();', {
+      segs: new Map([[element, props()], [{ el: element, pseudo: '::before' }, props()]]),
+      SPAN: 1, off: x => x, anims
+    });
+    assert.equal(anims.length, 2);
+    assert.equal(calls[0].options.pseudoElement, undefined);
+    assert.equal(calls[1].options.pseudoElement, '::before');
+  }
+  exercise(compiler, false);
+  exercise(compiler, true);
+  const broken = compiler.replace('(pseudo ? el.el : el)', '(el.pseudo ? el.el : el)');
+  assert.notEqual(broken, compiler, 'collision mutation must change the compiler');
+  assert.throws(() => exercise(broken, true), /animate/);
+});
+
 // ---------------------------------------------------------------- portabilidade
 for (const script of ['check.mjs', 'secret-scan.mjs']) {
   test(`${script} funciona fora do diretório do projeto`, () => {
